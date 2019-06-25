@@ -62,13 +62,8 @@ drop if missing(nivel)
 tab CUADRO nivel, missing
 
 
-egen seccion_ini =  rowtotal(D01-D07) if nivel == 1, missing
-egen seccion_pri =  rowtotal(D01-D06) if nivel == 2, missing
-egen seccion_sec =  rowtotal(D01-D10) if nivel == 3, missing
 
-egen seccion_total = rowtotal(seccion_ini - seccion_sec), missing
-
-collapse (sum) seccion_total, by(COD_MOD)
+collapse (sum) seccion_total, by(CODOOII)
 gen year = `year'
 tabstat seccion_total, stat(sum)
 tempfile seccion_`year'
@@ -90,4 +85,7 @@ save `matri_peru'
 *hay que buscar dónde están las auxiliares y sumar todos los docentes menos
 *auxiliares
 
-adicional
+forvalues anio = 2013/2018 {
+local anio = 2013
+use "3. Data\2. IIEE Level\Stata\Secciones_`anio'.dta" , clear
+
