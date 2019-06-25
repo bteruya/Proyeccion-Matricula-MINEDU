@@ -90,3 +90,4 @@ save `matri_peru'
 *hay que buscar dónde están las auxiliares y sumar todos los docentes menos
 *auxiliares
 
+adicional
