@@ -275,4 +275,216 @@ drop if gestion == "3" //sin privados
 tabstat *_total, stat(sum) 
 
 
+*-------------------------------matricula---------------------------------------
+
+*matricula
+*2013 SOLO CUADRO 302
+*2014 cuadro 201 (hay otros)
+*2015 cuadro 201
+*2016 cuadro 201 (hay otros)
+*2017 cuadro C201
+
+forvalues anio = 2013/2018 {
+use "3. Data\2. IIEE Level\Stata\Matricula_01_`anio'.dta" , clear
+*solo EBR 
+gen nivel = .
+replace nivel = 1 if inlist(NIV_MOD, "A1" , "A2" , "A3" )
+replace nivel = 2 if NIV_MOD == "B0"
+replace nivel = 3 if NIV_MOD == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+drop if missing(nivel)
+dis `anio'
+tab CUADRO nivel,m
+
+	if `anio' == 2014 {
+		keep if CUADRO == "201"
+	}
+
+	else if `anio' == 2016 {
+		keep if CUADRO == "201"
+	}
+	dis `anio'
+	tab CUADRO nivel, missing
+
+egen matri_tot =  rowtotal(D??) , missing
+gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
+keep if publico
+collapse (sum) matri_tot, by(CODOOII)
+
+gen year = `anio'
+tabstat matri_tot, stat(sum)
+tempfile matri_`anio'
+save `matri_`anio''
+
+}
+use `matri_2013' , replace
+forvalues anio = 2014/2018 {
+append using `matri_`anio''
+label data "Matrícula de EBR pública por UGEL"
+}
+tempfile matri_peru
+save `matri_peru'
+tabstat matri, stat(sum) by(year)
+
+
+*todos los años tienen correctamente los cuadros
+*no hay que elegir entre cuadros
+*hay que buscar dónde están las auxiliares y sumar todos los docentes menos
+*auxiliares
+
+*-------------------------------secciones---------------------------------------
+
+*Secciones, van cambiando los cuadros pero no es necesario filtrar, todas las 
+*secciones entran en el calculo
+forvalues year = 2013/2018 {
+use "3. Data\2. IIEE Level\Stata\Secciones_`year'.dta" , clear
+gen nivel = .
+replace nivel = 1 if inlist(NIV_MOD, "A1" , "A2" , "A3" )
+replace nivel = 2 if NIV_MOD == "B0"
+replace nivel = 3 if NIV_MOD == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+drop if missing(nivel)
+tab CUADRO nivel, missing
+
+egen seccion_total =  rowtotal(D??) , missing
+gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
+keep if publico == 1
+
+collapse (sum) seccion_total, by(CODOOII)
+gen year = `year'
+tabstat seccion_total, stat(sum)
+tempfile seccion_`year'
+save `seccion_`year''
+
+}
+use `seccion_2013' , replace
+forvalues year = 2014/2018 {
+append using `seccion_`year''
+label data "Secciones de EBR pública por UGEL"
+}
+tempfile seccion_peru
+save `seccion_peru'
+
+tabstat seccion_total, stat(sum) by(year)
+
+*-------------------------------Docentes----------------------------------------
+*No todos los docentes entran al calculo, los auxiliares deben ser excluidos.
+*No todos los cuadros son los relevantes.
+*Abajo una lista de los cuadros relevates y la variable que indica el auxiliar 
+
+
+/*2018
+*Inicial, cuadro C301, auxiliar D14
+*Primaria, cuadro C301, auxiliar D14
+*Secundaria,  cuadro C301, auxiliar D26
+
+*2017
+Inicial idem 2018
+Primaria idem 2018
+Secundaria,  cuadro C301, auxiliar D25
+
+2016
+Incial, cuadro 301, auxiliar D14
+Primaria, cuadro 301, auxiliar D22
+Secundaria, cuadro 301, auxiliar D22
+
+2015
+Incial, cuadro 301, auxiliar D13
+Primaria, cuadro 301, auxiliar D13
+Secundaria, cuadro 301, auxiliar D13
+
+2014
+Incial, idem 2015
+Primaria, idem 2015
+Secundaria, idem 2015
+
+2013
+Incial, cuadro 401, auxiliar D13
+Primaria, cuadro 401, auxiliar D13
+Secundaria, cuadro 401, auxiliar D13
+
+*/
+forvalues year = 2013/2018 {
+use "3. Data\2. IIEE Level\Stata\Docentes_01_`year'.dta" , clear
+gen nivel = .
+replace nivel = 1 if inlist(NIV_MOD, "A1" , "A2" , "A3"  )
+replace nivel = 2 if NIV_MOD == "B0"
+replace nivel = 3 if NIV_MOD == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+drop if missing(nivel)
+
+gen auxiliar =.
+
+if `year' == 2018 {
+replace auxiliar = D14 if nivel == 1 & CUADRO == "C301"
+replace auxiliar = D14 if nivel == 2 & CUADRO == "C301"
+replace auxiliar = D26 if nivel == 3 & CUADRO == "C301"
+}
+
+else if `year' == 2017 {
+replace auxiliar = D14 if nivel == 1 & CUADRO == "C301"
+replace auxiliar = D14 if nivel == 2 & CUADRO == "C301"
+replace auxiliar = D25 if nivel == 3 & CUADRO == "C301"
+}
+else if `year' == 2016 {
+replace auxiliar = D14 if nivel == 1 & CUADRO == "301"
+replace auxiliar = D22 if nivel == 2 & CUADRO == "301"
+replace auxiliar = D22 if nivel == 3 & CUADRO == "301"
+}
+else if `year' == 2015 {
+replace auxiliar = D13 if nivel == 1 & CUADRO == "301"
+replace auxiliar = D13 if nivel == 2 & CUADRO == "301"
+replace auxiliar = D13 if nivel == 3 & CUADRO == "301"
+}
+else if `year' == 2014 {
+replace auxiliar = D13 if nivel == 1 & CUADRO == "301"
+replace auxiliar = D13 if nivel == 2 & CUADRO == "301"
+replace auxiliar = D13 if nivel == 3 & CUADRO == "301"
+}
+else if `year' == 2013 {
+replace auxiliar = D13 if nivel == 1 & CUADRO == "401"
+replace auxiliar = D13 if nivel == 2 & CUADRO == "401"
+replace auxiliar = D13 if nivel == 3 & CUADRO == "401"
+}
+egen doc_total =  rowtotal(D??) , missing
+replace doc_total = doc_total - auxiliar
+
+gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
+keep if publico == 1
+
+
+collapse (sum) doc_total, by(CODOOII)
+gen year = `year'
+
+tabstat doc_total, stat(sum)
+
+tempfile doc_`year'
+save `doc_`year''
+}
+
+use `doc_2013' , replace
+forvalues year = 2014/2018 {
+append using `doc_`year''
+label data "Docentes de EBR pública por UGEL"
+}
+tempfile doc_peru
+save `doc_peru'
+
+tabstat doc_total, stat(sum) by(year)
+
+use `matri_peru', clear
+merge 1:1 year CODOOII using `doc_peru', nogen
+merge 1:1 year CODOOII using `seccion_peru', nogen
+label data "Data set a nivel de UGEL y anio"
+rename matri_tot matri_total
+
+tabstat *_total, stat(sum) by(year)
+
+
 	
