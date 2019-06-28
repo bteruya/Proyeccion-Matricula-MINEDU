@@ -6,3 +6,4 @@ Ejecuta todos los dofiles en el orden establecido para replicar el análisis
 
 ## Dofile_1_Intro
 Crea la data sobre las tablas introductorias
+En particular la evolución de variables educativas en el tiempo a partir del Censo Educativo

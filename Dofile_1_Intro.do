@@ -312,4 +312,30 @@ rename matri_tot matri_total
 tabstat *_total, stat(sum) by(year)
 
 
+*-------------------------------------------------------------------------------
+*CENSO REDATAM POBLACIÓN POR EDADES Y DISTRITOS
+
+import excel "3. Data\5. Country Level\Censo 2017_edad distrito.xlsx", ///
+	sheet("Output") cellrange(B10:C189368) clear
 	
+split B if substr(B,1,4) == "AREA"	, gen(ubigeo)
+split B if substr(B,1,4) == "Edad"	, gen(edad)
+
+drop ubigeo1 ubigeo2 edad1 edad3
+rename (ubigeo3 edad2) (ubigeo edad)
+drop if B == ""
+gen total = B == "Total"
+
+gen ubigeo_id = ""
+replace ubigeo_id = ubigeo if ubigeo != ""
+replace ubigeo_id = ubigeo_id[_n-1] if ubigeo == ""
+
+destring edad, replace
+drop if edad == .
+destring C, replace
+rename C poblacion
+keep ubigeo_id edad poblacion
+order ubigeo_id edad poblacion
+rename ubigeo_id ubigeo
+
+
