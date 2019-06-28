@@ -52,15 +52,15 @@ save "3. Data\2. IIEE Level\Stata\Matricula_01_2018.dta" , replace
 
 
 
-forvalues anio = 2013/2018 {
-import dbase "3. Data\2. IIEE Level\Censo Escolar/`anio'\Matricula_01.dbf", clear
-save "3. Data\2. IIEE Level\Stata\Matricula_01_`anio'.dta" , replace
+forvalues year = 2013/2018 {
+import dbase "3. Data\2. IIEE Level\Censo Escolar/`year'\Matricula_01.dbf", clear
+save "3. Data\2. IIEE Level\Stata\Matricula_01_`year'.dta" , replace
 
-import dbase "3. Data\2. IIEE Level\Censo Escolar/`anio'\Docentes_01.dbf", clear
-save "3. Data\2. IIEE Level\Stata\Docentes_01_`anio'.dta" , replace
+import dbase "3. Data\2. IIEE Level\Censo Escolar/`year'\Docentes_01.dbf", clear
+save "3. Data\2. IIEE Level\Stata\Docentes_01_`year'.dta" , replace
 
-import dbase "3. Data\2. IIEE Level\Censo Escolar/`anio'\Secciones.dbf", clear
-save "3. Data\2. IIEE Level\Stata\Secciones_`anio'.dta" , replace
+import dbase "3. Data\2. IIEE Level\Censo Escolar/`year'\Secciones.dbf", clear
+save "3. Data\2. IIEE Level\Stata\Secciones_`year'.dta" , replace
 }
 
 *
@@ -109,8 +109,8 @@ display 5701303/8013195
 *2016 cuadro 201 (hay otros)
 *2017 cuadro C201
 
-forvalues anio = 2013/2018 {
-use "3. Data\2. IIEE Level\Stata\Matricula_01_`anio'.dta" , clear
+forvalues year = 2013/2018 {
+use "3. Data\2. IIEE Level\Stata\Matricula_01_`year'.dta" , clear
 *solo EBR 
 gen nivel = .
 replace nivel = 1 if inlist(NIV_MOD, "A1" , "A2" , "A3" )
@@ -120,33 +120,30 @@ replace nivel = 3 if NIV_MOD == "F0"
 label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
 label val nivel nivel
 drop if missing(nivel)
-dis `anio'
+dis `year'
 tab CUADRO nivel,m
 
-	if `anio' == 2014 {
+	if `year' == 2014 | `year' == 2016  {
 		keep if CUADRO == "201"
 	}
 
-	else if `anio' == 2016 {
-		keep if CUADRO == "201"
-	}
-	dis `anio'
+	dis `year'
 	tab CUADRO nivel, missing
 
 egen matri_tot =  rowtotal(D??) , missing
 gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
-keep if publico
+keep if publico == 1
 collapse (sum) matri_tot, by(CODOOII)
 
-gen year = `anio'
+gen year = `year'
 tabstat matri_tot, stat(sum)
-tempfile matri_`anio'
-save `matri_`anio''
+tempfile matri_`year'
+save `matri_`year''
 
 }
 use `matri_2013' , replace
-forvalues anio = 2014/2018 {
-append using `matri_`anio''
+forvalues year = 2014/2018 {
+append using `matri_`year''
 label data "Matrícula de EBR pública por UGEL"
 }
 tempfile matri_peru
@@ -300,6 +297,8 @@ label data "Docentes de EBR pública por UGEL"
 }
 tempfile doc_peru
 save `doc_peru'
+save "3. Data\Datasets_intermedios\docentes_peru_2013-2018.dta", replace	
+
 
 tabstat doc_total, stat(sum) by(year)
 
