@@ -1,6 +1,7 @@
 /*******************************************************************************
-					PROYECCIÓN DE MATRÍCULA
-					Dofile: Metodología Moving Average
+					PROYECCIÓN DE VARIABLES EDUCATIVAS
+					Orden: 3
+					Dofile: Docentes
 					Brenda Teruya
 *******************************************************************************/
 
@@ -16,7 +17,6 @@ isid year CODOOII
 destring CODOOII, gen(codooii)
 xtset codooii year
 
-
 tssmooth exponential doc_exp1 = doc_total, forecast(2)  // forecast 2019 y 2020
 
 replace CODOOII = CODOOII[_n-1] if CODOOII == ""
@@ -26,8 +26,6 @@ replace doc_ma = (doc_ma[_n-1] + doc_total[_n-2] + doc_total[_n-3])/3 if year ==
 
 gen epm_ma2018 = abs(doc_ma - doc_total)/doc_total if year == 2018
 gen epm_exp2018 = abs(doc_exp1 - doc_total)/doc_total if year == 2018
-
-gen epm_ue2018 = .
 
 
 *-------------------------------------------------------------------------------
@@ -50,6 +48,11 @@ label var doc_metodo_ue "Método escogido por UGEL con método UE"
 
 gen doc_metodo = ""
 
+gen epm_ue2018 = .
+
+gen doc_ue = .
+label var doc_ue "Resultado de estimacion por UGEL"
+
 encode CODOOII, gen(ugel)
 
 foreach y in yniv ylog yinv {
@@ -71,7 +74,7 @@ local ugel_max = r(max)
 
 forvalues ugel = 1/`ugel_max' {
 	display `ugel'
-
+local doc_min = .
 	foreach y in yniv ylog yinv {
 
 		foreach x in tniv tlog tinv {
@@ -86,36 +89,34 @@ forvalues ugel = 1/`ugel_max' {
 		replace modelo_`y'_`x' = modelo_aux if ugel == `ugel' 
 		
 		if `y' == ylog {
-		replace modelo_`y'_`x' = exp(modelo_`y'_`x')
+			replace modelo_`y'_`x' = exp(modelo_`y'_`x')
 		} 
 		else if `y' == yinv{
-		replace modelo_`y'_`x' = 1/modelo_`y'_`x'
+			replace modelo_`y'_`x' = 1/modelo_`y'_`x'
 		}
 		
 		replace epm_`y'_`x' = abs(modelo_`y'_`x' - doc_total)/doc_total ///
 			if ugel == `ugel' & year == 2018
 		
+		mvencode epm_`y'_`x'  if ugel == `ugel', mv(0) override
+
+		summarize epm_`y'_`x' if ugel == `ugel' 
+		if r(sum) < `doc_min' {
+			local doc_min = r(sum)
+			replace doc_metodo_ue = "epm_`y'_`x'" if ugel == `ugel'	
+
+			replace doc_ue =  modelo_`y'_`x' if ugel == `ugel'
+			replace epm_ue2018 = epm_`y'_`x' if ugel == `ugel'
+		
+		}
+		
 		drop modelo_aux
 
 		}
 	}
-mvencode epm_y*  if ugel == `ugel', mv(0) override
-
-local doc_min = .
-foreach var of varlist epm_y*  {
-
-summarize `var' if ugel == `ugel'
-	if r(sum) < `doc_min' {
-	local doc_min = r(sum)
-	replace doc_metodo_ue = "`var'" if ugel == `ugel'	
-	}
-}
-	replace epm_ue2018 = `doc_min' if ugel == `ugel' & year == 2018
 
 dis `min_metodo'
 codebook doc_metodo_ue
-	
-	
 	
 }
  
@@ -127,8 +128,8 @@ foreach var of varlist epm_ma2018  epm_exp2018 epm_ue2018 {
 summarize `var'
 	return list
 	if r(sum) < `doc_min' {
-	local doc_min = r(sum)
-	replace doc_metodo = "`var'"	
+		local doc_min = r(sum)
+		replace doc_metodo = "`var'"	
 	}
 }
 
@@ -137,3 +138,6 @@ codebook doc_metodo
 count if year == 2018
 local error = 100*`doc_min'/r(N)
 dis "El error porcentual medio del mejor modelo es `error'% para el 2018"
+
+
+

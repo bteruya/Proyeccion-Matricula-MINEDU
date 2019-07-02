@@ -1,5 +1,5 @@
 /*******************************************************************************
-					PROYECCIÓN DE MATRÍCULA
+					PROYECCIÓN DE VARIABLES EDUCATIVAS
 					Orden: 2
 					Dofile: Preparación de los datos para las 5 metodologías
 					MA, CSR, MES, panel dinamico, minedu
@@ -66,7 +66,7 @@ append using `matri_`year''
 label data "Matrícula de EBR pública por UGEL de $n_grado grado"
 }
 tempfile matri_peru
-save `matri_peru'
+save `matri_peru', replace
 tabstat matri, stat(sum) by(year)
 
 *-------------------------------secciones---------------------------------------
@@ -91,7 +91,7 @@ collapse (sum) seccion_$n_grado , by(CODOOII)
 gen year = `year'
 tabstat seccion_$n_grado , stat(sum)
 tempfile seccion_`year'
-save `seccion_`year''
+save `seccion_`year'', replace
 
 }
 use `seccion_2013' , replace
@@ -106,7 +106,13 @@ tabstat seccion, stat(sum) by(year)
 
 *-------------------------------Docentes----------------------------------------
 
-use "3. Data\Datasets_intermedios\docentes_peru_2013-2018.dta", clear
+use `matri_peru', clear
+
+merge 1:1 year CODOOII using `seccion_peru'
+drop _m
+
+label data "Matrícula y secciones de EBR pública por UGEL de 4 grado entre 2013-2018"
+save "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta", replace
 isid year CODOOII
 
 
