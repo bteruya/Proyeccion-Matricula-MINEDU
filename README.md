@@ -1,5 +1,5 @@
 # Proyecciones
-Estos archivos proyectan variables educativas (matricula, docentes, secciones) del Peru
+Estos archivos proyectan variables educativas (matricula, docentes, secciones) del Perú
 
 ## Dofile_0_Master
 Ejecuta todos los dofiles en el orden establecido para replicar el análisis

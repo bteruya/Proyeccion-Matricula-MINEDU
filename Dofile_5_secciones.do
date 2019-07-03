@@ -1,7 +1,7 @@
 /*******************************************************************************
 					PROYECCIÓN DE VARIABLES EDUCATIVAS
-					Orden: 4
-					Dofile: Matricula
+					Orden: 5
+					Dofile: secciones
 					Brenda Teruya
 *******************************************************************************/
 cd "D:\Brenda GoogleDrive\Trabajo\MINEDU_trabajo\Proyecciones"
@@ -13,34 +13,28 @@ isid year CODOOII
 destring CODOOII, gen(codooii)
 xtset codooii year
 
-tssmooth exponential mat_exp1 = matri_4, forecast(2)  // forecast 2019 y 2020
+tssmooth exponential sec_exp1 = seccion_4, forecast(2)  // forecast 2019 y 2020
+label var sec_exp1 "Proyección exponencial"
 
 replace CODOOII = CODOOII[_n-1] if CODOOII == ""
 
-bys codooii: gen mat_ma = (matri_4[_n-1] + matri_4[_n-2] + matri_4[_n-3])/3
-replace mat_ma= (mat_ma[_n-1] + matri_4[_n-2] + matri_4[_n-3])/3 if year == 2020
+bys codooii: gen sec_ma = (seccion_4[_n-1] + seccion_4[_n-2] + seccion_4[_n-3])/3
+replace sec_ma= (sec_ma[_n-1] + seccion_4[_n-2] + seccion_4[_n-3])/3 if year == 2020
+label var sec_ma "Proyección medias móviles"
 
-gen epm_ma2018 = abs(mat_ma - matri_4)/matri_4 if year == 2018
-gen epm_exp2018 = abs(mat_exp1 - matri_4)/matri_4 if year == 2018
-*-------------------------------------------------------------------------------
-*Cohort Survival Ratio
-gen CSR = (matri_4 + L1.matri_4 + L2.matri_4) /(L1.matri_3 + L2.matri_3 + L3.matri_3)
-replace CSR = L1.CSR if inlist(year, 2019,2020)
-gen mat_CSR = CSR * L1.matri_4
-replace  mat_CSR = CSR * L1.mat_CSR if year == 2019 | year == 2020
-
-gen epm_csr2018 = abs(mat_CSR - matri_4)/matri_4 if year == 2018
+gen epm_ma2018 = abs(sec_ma - seccion_4)/seccion_4 if year == 2018
+gen epm_exp2018 = abs(sec_exp1 - seccion_4)/seccion_4 if year == 2018
 
 
 *-------------------------------------------------------------------------------
 *preparando variables para el bucle
 
-gen yniv = matri_4
-label var yniv "Nivel de matri_4"
-gen ylog = log(matri_4)
-label var ylog "Log matri_4"
-gen yinv = 1/matri_4
-label var yinv "Inversa matri_4"
+gen yniv = seccion_4
+label var yniv "Nivel de seccion_4"
+gen ylog = log(seccion_4)
+label var ylog "Log seccion_4"
+gen yinv = 1/seccion_4
+label var yinv "Inversa seccion_4"
 
 gen tniv = year
 label var tniv "Nivel de tiempo"
@@ -48,15 +42,15 @@ gen tlog = log(year)
 label var tlog "Log tiempo"
 gen tinv = 1/year
 label var tinv "Inversa tiempo"
-gen mat_metodo_ue = ""
-label var mat_metodo_ue "Método escogido por UGEL con método UE"
+gen sec_metodo_ue = ""
+label var sec_metodo_ue "Método escogido por UGEL con método UE"
 
-gen mat_metodo = ""
+gen sec_metodo = ""
 
 gen epm_ue2018 = .
 
-gen mat_ue = .
-label var mat_ue "Resultado de estimacion por UGEL"
+gen sec_ue = .
+label var sec_ue "Resultado de estimacion por UGEL"
 
 encode CODOOII, gen(ugel)
 
@@ -80,7 +74,7 @@ local ugel_max = r(max)
 
 forvalues ugel = 1/`ugel_max' {
 	display `ugel'
-local mat_min = .
+local sec_min = .
 	foreach y in yniv ylog yinv {
 
 		foreach x in tniv tlog tinv {
@@ -101,17 +95,17 @@ local mat_min = .
 			replace modelo_`y'_`x' = 1/modelo_`y'_`x'
 		}
 		
-		replace epm_`y'_`x' = abs(modelo_`y'_`x' - matri_4)/matri_4 ///
+		replace epm_`y'_`x' = abs(modelo_`y'_`x' - seccion_4)/seccion_4 ///
 			if ugel == `ugel' & year == 2018
 		
 		mvencode epm_`y'_`x'  if ugel == `ugel', mv(0) override
 
 		summarize epm_`y'_`x' if ugel == `ugel' 
-		if r(sum) < `mat_min' {
-			local mat_min = r(sum)
-			replace mat_metodo_ue = "epm_`y'_`x'" if ugel == `ugel'	
+		if r(sum) < `sec_min' {
+			local sec_min = r(sum)
+			replace sec_metodo_ue = "epm_`y'_`x'" if ugel == `ugel'	
 
-			replace mat_ue =  modelo_`y'_`x' if ugel == `ugel'
+			replace sec_ue =  modelo_`y'_`x' if ugel == `ugel'
 			replace epm_ue2018 = epm_`y'_`x' if ugel == `ugel'
 		
 		}
@@ -122,38 +116,37 @@ local mat_min = .
 	}
 
 dis `min_metodo'
-codebook mat_metodo_ue
+codebook sec_metodo_ue
 	
 }
  
 mvencode epm_ma2018  epm_exp2018 epm_ue2018 , mv(0) override
  
-local mat_min = .
-foreach var of varlist epm_ma2018  epm_exp2018 epm_ue2018 epm_csr2018 {
+local sec_min = .
+foreach var of varlist epm_ma2018  epm_exp2018 epm_ue2018 {
 
 summarize `var'
 	return list
-	if r(sum) < `mat_min' {
-		local mat_min = r(sum)
-		replace mat_metodo = "`var'"	
+	if r(sum) < `sec_min' {
+		local sec_min = r(sum)
+		replace sec_metodo = "`var'"	
 	}
 }
 
-dis `mat_min'
-codebook mat_metodo
+dis `sec_min'
+codebook sec_metodo
 count if year == 2018
-local error = 100*`mat_min'/r(N)
+local error = 100*`sec_min'/r(N)
 dis "El error porcentual medio del mejor modelo es `error'% para el 2018"
 
-replace epm_ma2018 = epm_ma2018/221
+replace epm_ma2018 = epm_ma2018/221 ///221 ugel en 2018
 replace epm_exp2018 = epm_exp2018/221
 replace epm_ue2018 = epm_ue2018/221
-replace epm_csr2018 = epm_csr2018/221
 
-
-collapse (sum) mat_ue matri_4 mat_exp1 mat_ma mat_CSR ///
-	epm_ma2018  epm_exp2018 epm_ue2018 epm_csr2018 , by(year)
+collapse (sum) sec_ue seccion_4 sec_exp1 sec_ma ///
+	epm_ma2018 epm_exp2018 epm_ue2018, by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
-	sheet("Matricula") sheetreplace firstrow(variables)
-	
+	sheet("Secciones") sheetreplace firstrow(variables)
+
+

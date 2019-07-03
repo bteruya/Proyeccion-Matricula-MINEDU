@@ -50,9 +50,10 @@ tabstat	D11, stat(sum)	by(nivel) // En secundaria no hay sexto grado hombres, to
 	tab CUADRO nivel, missing
 
 egen matri_$n_grado =  rowtotal($grado_mat) , missing
+egen matri_3 = rowtotal(D05 D06) , missing
 gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
 keep if publico == 1
-collapse (sum) matri_$n_grado, by(CODOOII)
+collapse (sum) matri_$n_grado matri_3, by(CODOOII)
 
 gen year = `year'
 tabstat matri_$n_grado, stat(sum)
@@ -63,11 +64,11 @@ save `matri_`year''
 use `matri_2013' , replace
 forvalues year = 2014/2018 {
 append using `matri_`year''
-label data "Matrícula de EBR pública por UGEL de $n_grado grado"
+label data "Matrícula de EBR pública por UGEL de $n_grado y 3 grado"
 }
 tempfile matri_peru
 save `matri_peru', replace
-tabstat matri, stat(sum) by(year)
+tabstat matri*, stat(sum) by(year)
 
 *-------------------------------secciones---------------------------------------
 
