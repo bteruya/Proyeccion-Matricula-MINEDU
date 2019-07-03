@@ -1,6 +1,10 @@
 # Proyecciones
 Estos archivos proyectan variables educativas (matricula, docentes, secciones) del Perú
 
+## Dofile_programs
+Contiene las subrutinas, debe ser ejecutado antes de realizar las estimaciones de docentes
+matrícula y secciones. Se ejecuta primero para mantener un orden.
+
 ## Dofile_0_Master
 Ejecuta todos los dofiles en el orden establecido para replicar el análisis
 
