@@ -63,7 +63,7 @@ export excel CODOOII year `var' metodo metodo_ue ue exp1 ma   using "4. Codigos\
 	sheet("`var'") sheetreplace firstrow(varlabels)
 
 collapse (sum) ue `var' exp1 ma ///
-	epm_ma2018 epm_exp2018 epm_ue2018, by(year)
+	epm_ma2018 epm_exp2018 ep	m_ue2018, by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("`var'") sheetreplace firstrow(variables)

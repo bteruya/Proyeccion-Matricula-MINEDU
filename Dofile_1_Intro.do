@@ -8,7 +8,7 @@ cd "D:\Brenda GoogleDrive\Trabajo\MINEDU_trabajo\Proyecciones"
 set excelxlsxlargefile on
 capture mkdir  "3. Data\3. Staff Level\Stata" // se crea solo una vez
 capture mkdir "3. Data\2. IIEE Level\Stata" //se crea una vez 
-
+capture mkdir "Datasets_intermedios"
 *Cuántas IIEE EIB hay
 use "3. Data\2. IIEE Level\padron_eib.dta" , clear
 isid cod_mod anexo
