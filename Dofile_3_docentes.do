@@ -22,6 +22,7 @@ p3_eleccion $epm
  
 tabstat doc_ue, stat(sum) by(year)
 graph bar (sum) doc_ue , over(year)
+
 replace epm_ma2018 = epm_ma2018/221
 replace epm_exp2018 = epm_exp2018/221
 replace epm_ue2018 = epm_ue2018/221

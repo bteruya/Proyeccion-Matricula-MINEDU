@@ -1,3 +1,4 @@
+*Programa que hace la proyección por método exponencial y medias móviles
 program p1_exp_ma
 isid year CODOOII
 destring CODOOII, gen(codooii)
@@ -17,6 +18,7 @@ gen epm_exp2018 = abs(exp1 - `1')/`1' if year == 2018
 
 end
 
+*Programa que hace la proyección por un MCO UGEL por UGEL
 program p2_metodo_ue
 gen yniv = `1'
 label var yniv "Nivel de `1'"
@@ -109,6 +111,8 @@ codebook metodo_ue
 }
  
 end
+
+*Programa que permite elegir entre métodos
 
 program p3_eleccion 
 

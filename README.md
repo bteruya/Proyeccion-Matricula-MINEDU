@@ -3,7 +3,7 @@ Estos archivos proyectan variables educativas (matricula, docentes, secciones) d
 
 ## Dofile_programs
 Contiene las subrutinas, debe ser ejecutado antes de realizar las estimaciones de docentes
-matrícula y secciones. Se ejecuta primero para mantener un orden.
+matrícula y secciones. Se ejecuta dentro del dofile master.
 
 ## Dofile_0_Master
 Ejecuta todos los dofiles en el orden establecido para replicar el análisis

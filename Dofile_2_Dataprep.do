@@ -11,9 +11,7 @@ cd "D:\Brenda GoogleDrive\Trabajo\MINEDU_trabajo\Proyecciones"
 *tercero de secundaria
 *CUARTO GRADO PRIMARIA Y SECUNDARIA
 
-global grado_mat D07 D08
-global n_grado 4
-global grado_seccion D04
+
 *-------------------------------matricula---------------------------------------
 
 /*
@@ -25,7 +23,7 @@ cuarto de primaria y cuarto secundaria
 2017: cuadro C201 (solo uno) , D07 D08
 2018: cuadro C201 (solo uno) , D07 D08
 */
-*si queremos cambiar el grado modificamos estos global grado y n_grado
+
 
 forvalues year = 2013/2018 {
 use "3. Data\2. IIEE Level\Stata\Matricula_01_`year'.dta" , clear
@@ -49,14 +47,20 @@ tabstat	D11, stat(sum)	by(nivel) // En secundaria no hay sexto grado hombres, to
 	dis `year'
 	tab CUADRO nivel, missing
 
-egen matri_$n_grado =  rowtotal($grado_mat) , missing
+egen matri_4 =  rowtotal(D07 D08) , missing
+gen matri_4_prim = matri_4*(nivel == 2)
+gen matri_4_secun = matri_4*(nivel == 3)
+
 egen matri_3 = rowtotal(D05 D06) , missing
+gen matri_3_prim = matri_3*(nivel == 2)
+gen matri_3_secun = matri_3*(nivel == 3)
+
 gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
 keep if publico == 1
-collapse (sum) matri_$n_grado matri_3, by(CODOOII)
+collapse (sum) matri_4 matri_4_* matri_3 matri_3_*, by(CODOOII)
 
 gen year = `year'
-tabstat matri_$n_grado, stat(sum)
+tabstat matri_4_*, stat(sum)
 tempfile matri_`year'
 save `matri_`year''
 
@@ -64,7 +68,7 @@ save `matri_`year''
 use `matri_2013' , replace
 forvalues year = 2014/2018 {
 append using `matri_`year''
-label data "Matrícula de EBR pública por UGEL de $n_grado y 3 grado"
+label data "Matrícula de EBR pública por UGEL de 4 y 3 grado"
 }
 tempfile matri_peru
 save `matri_peru', replace
@@ -84,13 +88,16 @@ label val nivel nivel
 drop if missing(nivel)
 tab CUADRO nivel, missing
 
-gen seccion_$n_grado =  $grado_seccion
+gen seccion_4 =  D04
 gen publico = substr(GES_DEP,1,1) == "A" // no hay missings
 keep if publico == 1
 
-collapse (sum) seccion_$n_grado , by(CODOOII)
+gen seccion_4_prim = seccion_4*(nivel == 2)
+gen seccion_4_secun = seccion_4*(nivel == 3)
+
+collapse (sum) seccion_4 seccion_4_* , by(CODOOII)
 gen year = `year'
-tabstat seccion_$n_grado , stat(sum)
+tabstat seccion_4 , stat(sum)
 tempfile seccion_`year'
 save `seccion_`year'', replace
 
@@ -103,7 +110,7 @@ label data "Secciones de EBR pública por UGEL"
 tempfile seccion_peru
 save `seccion_peru'
 
-tabstat seccion, stat(sum) by(year)
+tabstat seccion*, stat(sum) by(year)
 
 *-------------------------------Docentes----------------------------------------
 
@@ -112,7 +119,19 @@ use `matri_peru', clear
 merge 1:1 year CODOOII using `seccion_peru'
 drop _m
 
-label data "Matrícula y secciones de EBR pública por UGEL de 4 grado entre 2013-2018"
+label variable matri_4 "Matrícula 4 primaria o secundaria"
+label variable matri_4_prim "Matrícula 4 primaria"
+label variable matri_4_secun "Matrícula 4 secundaria"
+
+label variable matri_3 "Matrícula 3 primaria o secundaria"
+label variable matri_3_prim "Matrícula 3 primaria"
+label variable matri_3_secun "Matrícula 3 secundaria"
+
+label variable seccion_4 "Secciones 4 primaria o secundaria"
+label variable seccion_4_prim "Secciones 4 primaria"
+label variable seccion_4_secun "Secciones 4 secundaria"
+
+label data "Matrícula y secciones de EBR pública por UGEL de 4 grado primaria secundaria entre 2013-2018"
 save "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta", replace
 isid year CODOOII
 
