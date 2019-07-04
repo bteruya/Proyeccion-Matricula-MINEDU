@@ -35,7 +35,7 @@ replace nivel = 3 if NIV_MOD == "F0"
 
 label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
 label val nivel nivel
-drop if missing(nivel)
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
 dis `year'
 tab CUADRO nivel,m
 tabstat	D11, stat(sum)	by(nivel) // En secundaria no hay sexto grado hombres, todo bien
@@ -85,7 +85,7 @@ replace nivel = 3 if NIV_MOD == "F0"
 
 label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
 label val nivel nivel
-drop if missing(nivel)
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
 tab CUADRO nivel, missing
 
 gen seccion_4 =  D04

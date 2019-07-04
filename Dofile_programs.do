@@ -133,7 +133,4 @@ count if year == 2018
 local error = 100*`min'/r(N)
 dis "El error porcentual medio del mejor modelo es `error'% para el 2018"
 
-
-
-
 end

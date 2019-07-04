@@ -6,9 +6,10 @@
 *******************************************************************************/
 cd "D:\Brenda GoogleDrive\Trabajo\MINEDU_trabajo\Proyecciones"
 
+log using "4. Codigos\Output\secciones.txt" , replace text
 *-------------------------------Secciones---------------------------------------
 
-foreach var of varlist seccion_4* {
+foreach var in seccion_4 seccion_4_prim seccion_4_secun {
 use "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta",  clear
 
 keep `var' CODOOII year
@@ -24,17 +25,19 @@ global epm epm_ma2018 epm_exp2018 epm_ue2018
 
 p3_eleccion $epm 
 
-preserve 
+replace epm_ma2018 = epm_ma2018/221
+replace epm_exp2018 = epm_exp2018/221
+replace epm_ue2018 = epm_ue2018/221
+
+export excel CODOOII year `var' metodo metodo_ue ue exp1 ma   using "4. Codigos\Output\Proyeccion_porUGEL.xls", ///
+	sheet("`var'") sheetreplace firstrow(varlabels)
 
 collapse (sum) ue `var' exp1 ma ///
-	epm_ma2018 epm_exp2018 epm_ue2018, by(year)
+	epm_ma2018 epm_exp2018 ep	m_ue2018, by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("`var'") sheetreplace firstrow(variables)
-
-restore
-export excel CODOOII year `var' metodo metodo_ue ue exp1 ma   using "4. Codigos\Output\Proyeccion_porUGEL.xls", ///
-	sheet("`var'") sheetreplace firstrow(varlabels)
 	
 }
 
+log close
