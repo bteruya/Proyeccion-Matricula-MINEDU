@@ -74,6 +74,136 @@ tempfile matri_peru
 save `matri_peru', replace
 tabstat matri*, stat(sum) by(year)
 
+************ Matricula para el método BID
+*matricula 2017
+
+	use "3. Data\4. Student level\siagie-Input\data_2017", clear
+	duplicates report id_persona
+	duplicates report id_persona fecha_registro //cuando vemos la fecha ne la que la persona 
+	gsort id_persona -fecha_registro
+	duplicates tag id_persona, gen(dupli_persona)
+	tab dupli_persona
+	
+	by id_persona: gen unique=_n //ya esta ordenado, de la fecha mas reciente a la mas antigua
+	*unique sera 1 cuando sea la fecha mas reciente
+	keep if unique==1
+	*nos quedamos con los de la fecha de registro mas reciente, si la fecha de registro es la misma (44 casos)
+	*es aleatorio
+
+	gen dsc_grado_noespacio= subinstr(dsc_grado," ","",.)
+	
+	gen grado=.
+	*inicial
+	replace grado=2 if id_grado==1
+	replace grado=3 if id_grado ==2 
+	replace grado=3 if dsc_grado_noespacio=="Grupo3años"
+	replace grado=4 if  dsc_grado_noespacio=="4años" 
+	replace grado=4 if dsc_grado_noespacio=="Grupo4años"
+	replace grado=5 if dsc_grado_noespacio=="5años"
+	replace grado=5 if dsc_grado_noespacio=="Grupo5años"
+	
+	*primaria
+	replace grado=6 if id_grado ==4 &  dsc_grado_noespacio=="PRIMERO"
+	replace grado=7 if id_grado ==5 &  dsc_grado_noespacio=="SEGUNDO"
+	replace grado=8 if id_grado ==6 &  dsc_grado_noespacio=="TERCERO"
+	replace grado=9 if id_grado ==7 
+	replace grado=10 if id_grado ==8
+	replace grado=11 if  dsc_grado_noespacio =="SEXTO"
+	
+	*SECUNDARIA
+	replace grado=12 if id_grado == 10
+	replace grado=13 if id_grado == 11
+	replace grado=14 if id_grado == 12
+	replace grado=15 if id_grado == 13
+	replace grado=16 if id_grado == 14
+	
+	rename id_anio year
+	
+	keep year id_persona grado cod_mod id_seccion
+	
+	tostring id_persona, replace format(%08.0f)
+	tostring cod_mod, replace format(%07.0f)
+	
+	
+	save "3. Data\Datasets_intermedios\siagie_2017.dta", replace 
+	
+	
+	use "3. Data\Datasets_intermedios\siagie_2017.dta",clear
+	gen matri_ = 1
+	tostring cod_mod, replace format(%07.0f)
+	
+	replace id_seccion="01" if id_seccion=="  "
+	encode id_seccion, gen(n_sec)
+	
+	
+	collapse (sum) matri_ (max) n_sec, by(grado cod_mod)
+	label data "Secciones y matricula por grado y codmod"
+	save "3. Data\Datasets_intermedios\secc_efectiva_2017_b", replace
+	
+	use  "3. Data\Datasets_intermedios\secc_efectiva_2017_b", clear
+	collapse (sum) n_sec_ef=n_sec, by(cod_mod)
+	tab n_sec_ef
+	label data "Secciones y matricula por codmod"
+	save "3. Data\Datasets_intermedios\secc_efectiva_codmod_2017_b", replace
+	
+	
+	use  "3. Data\Datasets_intermedios\secc_efectiva_2017_b", clear
+	
+	keep matri_ cod_mod grado
+	reshape wide matri_, i(cod_mod) j(grado)
+	
+	label data "secciones y matricula por grado codmod wide"
+	save "3. Data\Datasets_intermedios\matri_efectiva_2017_b", replace
+
+	use "3. Data\2. IIEE Level\Stata\Padron_web.dta", clear
+	
+	rename _all, lower
+	duplicates drop cod_mod, force
+	keep niv_mod d_niv_mod d_forma cod_car d_cod_car gestion d_gestion ///
+		ges_dep d_ges_dep codooii cod_mod
+	merge 1:1 cod_mod using "3. Data\Datasets_intermedios\matri_efectiva_2017_b"
+	*hay 80 codmod que solo estan en siagie no en el padron 
+	*los busque en escale y no estan, los botare.
+	keep if _m == 3
+	drop _m
+	
+	gen publico = substr(ges_dep,1,1) == "A" // no hay missings
+	keep if publico == 1
+	
+	collapse (sum) matri_* , by(codooii)
+	label data "Matricula publica de c/grado por UGEL"
+	gen year = 2017
+	save "3. Data\Datasets_intermedios\matri_2017_UGEL", replace
+
+*******TASAS A USAR DESERCION REPITENCIA
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
 *-------------------------------secciones---------------------------------------
 
 forvalues year = 2013/2018 {
