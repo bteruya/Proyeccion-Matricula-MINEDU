@@ -388,7 +388,7 @@ append using  `nexus`year''
 tempfile nexus_peru
 save `nexus_peru'
 
-*alumnos / secciones
+*alumnos y secciones
 
 forvalues year = 2013/2018 {
 

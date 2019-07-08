@@ -15,7 +15,7 @@ Output data: output\matricula_modelada_codmod_b
 ********************************************************************************
 *SIAGIE 2017
 
-	use "input\SIAGIE 2013-2017\data_2017", clear
+	use "4. Student level\siagie-Input\data_2017", clear
 	duplicates report id_persona
 	duplicates report id_persona fecha_registro //cuando vemos la fecha ne la que la persona 
 	gsort id_persona -fecha_registro

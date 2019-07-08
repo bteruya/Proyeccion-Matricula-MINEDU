@@ -22,5 +22,3 @@ do "4. Codigos\Dofiles\Dofile_3_proyeccion.do"
 
 erase  "4. Codigos\Output\Proyeccion.xls"
 erase  "4. Codigos\Output\Tendencia.xlsx"
-erase  "4. Codigos\Output\secciones.log"
-shell rmdir "Datasets_intermedios" /s

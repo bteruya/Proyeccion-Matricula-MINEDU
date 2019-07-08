@@ -78,12 +78,7 @@ tabstat matri*, stat(sum) by(year)
 *matricula 2017
 
 	use "3. Data\4. Student level\siagie-Input\data_2017", clear
-	duplicates report id_persona
-	duplicates report id_persona fecha_registro //cuando vemos la fecha ne la que la persona 
 	gsort id_persona -fecha_registro
-	duplicates tag id_persona, gen(dupli_persona)
-	tab dupli_persona
-	
 	by id_persona: gen unique=_n //ya esta ordenado, de la fecha mas reciente a la mas antigua
 	*unique sera 1 cuando sea la fecha mas reciente
 	keep if unique==1
@@ -132,20 +127,9 @@ tabstat matri*, stat(sum) by(year)
 	gen matri_ = 1
 	tostring cod_mod, replace format(%07.0f)
 	
-	replace id_seccion="01" if id_seccion=="  "
-	encode id_seccion, gen(n_sec)
-	
-	
-	collapse (sum) matri_ (max) n_sec, by(grado cod_mod)
+	collapse (sum) matri_ , by(grado cod_mod)
 	label data "Secciones y matricula por grado y codmod"
 	save "3. Data\Datasets_intermedios\secc_efectiva_2017_b", replace
-	
-	use  "3. Data\Datasets_intermedios\secc_efectiva_2017_b", clear
-	collapse (sum) n_sec_ef=n_sec, by(cod_mod)
-	tab n_sec_ef
-	label data "Secciones y matricula por codmod"
-	save "3. Data\Datasets_intermedios\secc_efectiva_codmod_2017_b", replace
-	
 	
 	use  "3. Data\Datasets_intermedios\secc_efectiva_2017_b", clear
 	
@@ -156,7 +140,7 @@ tabstat matri*, stat(sum) by(year)
 	save "3. Data\Datasets_intermedios\matri_efectiva_2017_b", replace
 
 	use "3. Data\2. IIEE Level\Stata\Padron_web.dta", clear
-	
+
 	rename _all, lower
 	duplicates drop cod_mod, force
 	keep niv_mod d_niv_mod d_forma cod_car d_cod_car gestion d_gestion ///
@@ -164,45 +148,127 @@ tabstat matri*, stat(sum) by(year)
 	merge 1:1 cod_mod using "3. Data\Datasets_intermedios\matri_efectiva_2017_b"
 	*hay 80 codmod que solo estan en siagie no en el padron 
 	*los busque en escale y no estan, los botare.
+	*61,905 codmod que estan en padron y no siagie, esos 61mil no entrar al analisis
 	keep if _m == 3
 	drop _m
 	
 	gen publico = substr(ges_dep,1,1) == "A" // no hay missings
 	keep if publico == 1
+
+	gen nivel = .
+	replace nivel = 1 if inlist(niv_mod, "A1" , "A2" , "A3" )
+	replace nivel = 2 if niv_mod == "B0"
+	replace nivel = 3 if niv_mod == "F0"
+
+	label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+	label val nivel nivel
+	keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
 	
 	collapse (sum) matri_* , by(codooii)
 	label data "Matricula publica de c/grado por UGEL"
 	gen year = 2017
 	save "3. Data\Datasets_intermedios\matri_2017_UGEL", replace
 
+	
+	use "3. Data\Datasets_intermedios\siagie_2017.dta", clear
+	destring id_persona, replace
+	merge 1:m id_persona using "3. Data\4. Student level\siagie-Input\sit_final_cons_new.dta", force
 *******TASAS A USAR DESERCION REPITENCIA
+		
+*1. Desercion
+use  "3. Data\4. Student level\siagie-Input\sit_final_cons_new.dta", clear
+drop if year ==2012 //este ano solo tiene pronoei
+keep if  unique 		
+keep cod_mod grado id_persona fecnac year sit_final nombres apellimat apellipat dni sexo
+
+tostring cod_mod id_persona, replace
+replace cod_mod = "0"*(7-strlen(cod_mod)) + cod_mod 
+replace id_persona = "0"*(8-strlen(id_persona)) + id_persona
+
+bys id_persona: gen  drop_den =  (grado < 16)  & year < 2016
 	
+sort id_persona year
+bys id_persona: gen  drop = grado[_n+1] == . & (grado < 16) & year < 2016
+
+preserve 
+
+use "3. Data\2. IIEE Level\Stata\Padron_web.dta", clear
+rename _all, lower
+keep if anexo=="0"
+tempfile padron_cod
+gen dpto_cod=substr(codgeo, 1, 2)
+gen prov_cod=substr(codgeo, 1, 4)
+gen publico = substr(ges_dep,1,1) == "A" // no hay missings
+save `padron_cod', replace
+		
+restore
+merge m:1 cod_mod using `padron_cod' , keepusing(  d_dpto d_prov d_dist ///
+dpto_cod prov_cod gestion codgeo niv_mod area_censo publico codooii)
+
+keep if publico == 1
+			
+keep if _merge==3 //publicas, EBR sin PRONOEI
+save "3. Data\Datasets_intermedios\desercion_id.dta" , replace
+
+********Tasa de desercion promedio de primaria y secundaria *****
+use  "3. Data\Datasets_intermedios\desercion_id.dta",clear
+gen nivel = .
+replace nivel = 1 if inlist(niv_mod, "A1" , "A2" , "A3" )
+replace nivel = 2 if niv_mod == "B0"
+replace nivel = 3 if niv_mod == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
+
+tabstat nivel, stat(min max) by(grado) // por grado está bien definido el nivel. 
+*Los grados de primaria tienen 2 y secundaria 3, no hay alguno cruzado
+
+collapse (sum)  drop* (first) d_dpto d_prov prov_cod, by(year codooii nivel) 
+gen  r_drop = drop/drop_den
+
+label var r_drop "Tasa desercion prim/sec x UGEL y año"
+keep r_drop year codooii nivel
+reshape wide r_drop , i(year codooii) j(nivel)
+rename codooii CODOOII
+destring CODOOII, gen(codooii)
+xtset codooii year
+
+
+replace year = year+1
+drop if year == 2017
+
+tssmooth exponential r_drop2_exp = r_drop2 , forecast(4) 
+label var r_drop2_exp "Deserción por UGEL forecast exponencial primaria"
+tssmooth exponential r_drop3_exp = r_drop3 if year <= 2016 , forecast(4) 
+label var r_drop3_exp "Deserción por UGEL forecast exponencial secundaria"
+
+save "3. Data\Datasets_intermedios\deser_ugel2020", replace
+
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 *-------------------------------secciones---------------------------------------
 

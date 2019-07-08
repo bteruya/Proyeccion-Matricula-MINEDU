@@ -16,6 +16,7 @@ p1_exp_ma doc_total
 *programa que proyecta según MCO por UGEL
 p2_metodo_ue doc_total
  
+*programa que elige entre metodos
 global epm epm_ma2018 epm_exp2018 epm_ue2018 
 
 p3_eleccion $epm 
@@ -23,7 +24,7 @@ p3_eleccion $epm
 tabstat ue, stat(sum) by(year)
 graph bar (sum) ue , over(year)
 
-replace epm_ma2018 = epm_ma2018/221
+replace epm_ma2018 = epm_ma2018/221 //hay 221 UGEL en 2018 
 replace epm_exp2018 = epm_exp2018/221
 replace epm_ue2018 = epm_ue2018/221
 
@@ -80,7 +81,6 @@ local n : word count $variables4
 
 forval i = 1/`n' {	
 use "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta",  clear
-
 	local var4 : word `i' of $variables4
 	local var3 : word `i' of $variables3
 
@@ -91,15 +91,13 @@ p1_exp_ma `var4'
 p2_metodo_ue `var4'
 *--------
 *Cohort Survival Ratio
-gen CSR = ( `var4' + L1.`var4' + L2.`var4') /(L1.`var3' + L2.`var3' + L3.`var3')
-replace CSR = L1.CSR if inlist(year, 2019,2020)
-gen mat_CSR = CSR * L1.`var4'
+gen CSR = ( `var4' + L1.`var4' ) /(L1.`var3' + L2.`var3' )
+gen mat_CSR = L1.CSR * L1.`var3'
 label variable mat_CSR "Cohort Survival Ratio"
-replace  mat_CSR = CSR * L1.mat_CSR if year == 2019 | year == 2020
+replace  mat_CSR = L2.CSR * L1.mat_CSR if year == 2020
 
 gen epm_csr2018 = abs(mat_CSR - `var4')/`var4' if year == 2018
 
- 
 global epm epm_ma2018 epm_exp2018 epm_ue2018 epm_csr2018
 
 p3_eleccion $epm 
