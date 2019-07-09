@@ -119,4 +119,40 @@ export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("`var4'") sheetreplace firstrow(variables)
 }
 
+use "3. Data\Datasets_intermedios\matri_tasas_2020.dta" , clear
+*en 2017 no hay inicial, debido a la bd que me han pasado
+* seguimos con lo que tenemos
+keep matri_* matri_exp_* codooii year t_tras_exp2 t_tras_exp3 t_desap_exp2 t_desap_exp3 r_drop2_exp r_drop3_exp
+
+renvars matri_? matri_?? matri_exp_* ///
+	 , suffix("_")
+
+reshape wide matri_?_ matri_??_ matri_exp_* ///
+	t_tras_exp2 t_tras_exp3 t_desap_exp2 t_desap_exp3 r_drop2_exp r_drop3_exp , i(codooii ) j(year)
+
+
+	forval a = 2017/2019 {
+	local b = `a'+1 
+	
+	gen p_matri_7_`b' = matri_6_`a'*(1 - r_drop2_exp`a'  + t_tras_exp2`a')+matri_7_`a'*t_desap_exp2`a'
+	
+	forval x = 7/10 {
+	local y = `x' + 1
+	gen p_matri_`y'_`b' = matri_`x'_`a'*(1 - r_drop2_exp`a' - t_desap_exp2`a'+ t_tras_exp2`a') + matri_`y'_`a'*t_desap_exp2`a'
+	}
+	
+	gen p_matri_12_`b' = matri_11_`a'*(1 - r_drop2_exp`a' - t_desap_exp2`a'+ t_tras_exp2`a')+  matri_11_`a'*t_desap_exp3`a'
+	forval x = 13/15{
+	local y = `x'+1
+	gen p_matri_`y'_`b' = matri_`x'_`a'*(1 - r_drop3_exp`a' - t_desap_exp3`a'+ t_tras_exp3`a') + matri_`y'_`a'*t_desap_exp3`a'
+	}
+	
+	/*forval x = 3/5 {
+	gen p_matri20`b'_`x' = matri20`b'_6 * cobertura_`x'
+	replace p_matri20`b'_`x' = matri20`a'_`x' if matri20`b'_`x' == 0
+	
+	}	
+	*/
+	}
+
 
