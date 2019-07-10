@@ -572,7 +572,6 @@ save "3. Data\Datasets_intermedios\tasas_2020.dta" , replace
 use  "3. Data\Datasets_intermedios\matri_ugel_2020.dta", clear
 merge 1:1 codooii year using "3. Data\Datasets_intermedios\tasas_2020.dta", nogen
 save "3. Data\Datasets_intermedios\matri_tasas_2020.dta" , replace
-
 *-------------------------------secciones---------------------------------------
 
 forvalues year = 2013/2018 {
