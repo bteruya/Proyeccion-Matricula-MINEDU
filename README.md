@@ -16,7 +16,7 @@ En particular la evolución de variables educativas en el tiempo a partir del Ce
 Prepara los datasets de cuarto de primaria y secundaria. Si se desea ampliar para otros 
 grados hay que cambiar aquí el dataset.
 
-## Dofile_3_docentes
-Crea las estimaciones de los docentes a través del método medias móviles, suavización exponencial 
-y el método de la UE anterior.
+## Dofile_3_proyeccion
+Crea las estimaciones de los docentes, secciones y matrícula a través del método medias móviles, suavización exponencial 
+y el método de la UE anterior. Para matrícula se añade CSR y método BID grado a grado.
 
