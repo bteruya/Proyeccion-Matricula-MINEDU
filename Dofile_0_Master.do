@@ -1,9 +1,9 @@
 /*******************************************************************************
-					PROYECCIÓN DE MATRÍCULA
+					PROYECCIÓN DE VARIABLES EDUCATIVAS
 					Orden: 0
 					Dofile: Master Dofile
 					Input: Censo Escolar, Padrón Web, Nexus, Siagie
-					
+					Output: Proyeccion_porUGEL
 					Brenda Teruya
 *******************************************************************************/
 cd "D:\Brenda GoogleDrive\Trabajo\MINEDU_trabajo\Proyecciones"

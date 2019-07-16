@@ -572,6 +572,55 @@ save "3. Data\Datasets_intermedios\tasas_2020.dta" , replace
 use  "3. Data\Datasets_intermedios\matri_ugel_2020.dta", clear
 merge 1:1 codooii year using "3. Data\Datasets_intermedios\tasas_2020.dta", nogen
 save "3. Data\Datasets_intermedios\matri_tasas_2020.dta" , replace
+
+*MCO forecast
+*-------------------------------------------------------------------------------
+use "3. Data\Datasets_intermedios\matri_tasas_2020.dta", clear
+replace CODOOII = CODOOII[_n-1] if CODOOII == ""
+
+
+p2_metodo_ue_year tasa_desapr2 2016 // 2016 es el ultimo año disponible
+drop metodo_ue metodo epm_ue2016 ugel
+rename ue t_desap_ue2
+
+p2_metodo_ue_year tasa_desapr3 2016 // 2016 es el ultimo año disponible
+drop metodo_ue metodo epm_ue2016 ugel
+rename ue t_desap_ue3
+
+/*
+p2_metodo_ue_year r_drop2 2017 // 2017 es el ultimo año disponible
+drop metodo_ue metodo epm_ue2017 ugel
+rename ue r_drop2_ue
+mvencode r_drop2_ue , mv(0) override
+*/
+p2_metodo_ue_year r_drop3 2017 // 2017 es el ultimo año disponible
+drop metodo_ue metodo epm_ue2017 ugel
+rename ue r_drop3_ue
+*mvencode r_drop3_ue , mv(0) override
+
+gen t_tras_mas = tasa_tras2 + 1 // mas uno porque log de negativo es missing
+
+p2_metodo_ue_year t_tras_mas 2017 // 2017 es el ultimo año disponible
+drop metodo_ue metodo epm_ue2017 ugel
+replace ue = ue - 1  // menos uno para retomar la forma anterior
+rename ue t_tras_ue2
+
+replace t_tras_mas = tasa_tras3 + 1
+
+p2_metodo_ue_year t_tras_mas 2017 // 2017 es el ultimo año disponible
+drop metodo_ue metodo epm_ue2017 ugel
+replace ue = ue - 1 
+rename ue t_tras_ue3
+
+forvalues i = 6/16 {
+p2_metodo_ue_year matri_`i' 2018
+drop metodo_ue metodo epm_ue2018 ugel
+rename ue matri_ue_`i'
+label var matri_ue_`i' "Matricula edad `i' por UGEL forecast exponencial"
+
+}
+
+save "3. Data\Datasets_intermedios\matri_tasas_2020_MCO.dta", replace
 *-------------------------------secciones---------------------------------------
 
 forvalues year = 2013/2018 {

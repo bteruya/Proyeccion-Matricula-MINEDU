@@ -134,3 +134,99 @@ local error = 100*`min'/r(N)
 dis "El error porcentual medio del mejor modelo es `error'% para el 2018"
 
 end
+
+program p2_metodo_ue_year
+gen yniv = `1'
+label var yniv "Nivel de `1'"
+gen ylog = log(`1')
+label var ylog "Log `1'"
+gen yinv = 1/`1'
+label var yinv "Inversa `1'"
+
+gen tniv = year
+label var tniv "Nivel de tiempo"
+gen tlog = log(year)
+label var tlog "Log tiempo"
+gen tinv = 1/year
+label var tinv "Inversa tiempo"
+gen metodo_ue = ""
+label var metodo_ue "Método escogido por UGEL con método UE"
+
+gen metodo = ""
+
+gen epm_ue`2' = .
+
+gen ue = .
+label var ue "Resultado de estimacion por UGEL"
+
+encode CODOOII, gen(ugel)
+
+foreach y in yniv ylog yinv {
+
+	foreach x in tniv tlog tinv {
+
+	gen modelo_`y'_`x' = .
+	label var modelo_`y'_`x' "Estimación del modelo `y' vs `x' "
+	gen epm_`y'_`x' = .
+	label var epm_`y'_`x' "Error porcentual medio del modelo `y' vs `x' "
+
+	}
+}
+*-------------------------------------------------------------------------------
+*ugel por ugel
+
+summarize ugel
+local ugel_max = r(max)
+
+forvalues ugel = 1/`ugel_max' {
+	display `ugel'
+local min = .
+	foreach y in yniv ylog yinv {
+
+		foreach x in tniv tlog tinv {
+			
+		*local y yniv
+		*loca x tniv
+		*local ugel 1
+		
+		regress `y' `x' if ugel == `ugel'
+		predict modelo_aux if ugel == `ugel', xb
+		
+		replace modelo_`y'_`x' = modelo_aux if ugel == `ugel' 
+		
+		if `y' == ylog {
+			replace modelo_`y'_`x' = exp(modelo_`y'_`x') if ugel == `ugel'
+		} 
+		else if `y' == yinv{
+			replace modelo_`y'_`x' = 1/modelo_`y'_`x' if ugel == `ugel'
+		}
+		
+		replace epm_`y'_`x' = abs(modelo_`y'_`x' - `1')/`1' ///
+			if ugel == `ugel' & year == `2'
+		
+		mvencode epm_`y'_`x'  if ugel == `ugel', mv(0) override
+
+		summarize epm_`y'_`x' if ugel == `ugel' 
+		if r(sum) < `min' {
+			local min = r(sum)
+			replace metodo_ue = "epm_`y'_`x'" if ugel == `ugel'	
+
+			replace ue =  modelo_`y'_`x' if ugel == `ugel'
+			replace epm_ue`2' = epm_`y'_`x' if ugel == `ugel'
+		
+		}
+		
+		drop modelo_aux
+
+		}
+	}
+
+dis `min_metodo'
+codebook metodo_ue
+	
+}
+
+drop yniv - tinv modelo_* epm_*_*
+ 
+end
+
