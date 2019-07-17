@@ -31,8 +31,23 @@ replace epm_ue2018 = epm_ue2018/221
 export excel CODOOII year doc_total metodo metodo_ue ue exp1 ma   using ///
 	"4. Codigos\Output\Proyeccion_porUGEL.xls", ///
 	sheet("doc_total") sheetreplace firstrow(varlabels)
-
+	
+	
 preserve
+
+keep CODOOII year doc_total
+drop if year == 2013
+reshape wide doc_total , ///
+	i(CODOOII) j(year)
+export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
+	sheet("doc_total") sheetreplace firstrow(variables)
+
+*En este excel está la serie de docentes totales que se pone en el aplicativo
+*excel de la actual metodologia UE
+
+restore 
+preserve
+
 collapse (sum) ue doc_total exp1 ma ///
 	$epm , by(year)
 
@@ -71,10 +86,19 @@ export excel CODOOII year `var' metodo metodo_ue ue exp1 ma   using ///
 	"4. Codigos\Output\Proyeccion_porUGEL.xls", ///
 	sheet("`var'") sheetreplace firstrow(varlabels)
 
+preserve 
 collapse (sum) ue `var' exp1 ma ///
 	epm_ma2018 epm_exp2018 epm_ue2018, by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
+	sheet("`var'") sheetreplace firstrow(variables)
+	
+restore	
+keep CODOOII year `var'
+keep if inrange(year, 2014,2018)
+reshape wide `var' , ///
+	i(CODOOII) j(year)
+export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
 	sheet("`var'") sheetreplace firstrow(variables)
 	
 }
@@ -248,7 +272,8 @@ export excel using "4. Codigos\Output\Proyeccion.xls", ///
 
 
 
-*Método UE del Excel
+*Método UE del Excel, pasar data a Excel y luego copiarla al aplicativo con el que
+*se proyecta
 
 use "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta",  clear
 keep CODOOII year matri_4*
@@ -260,3 +285,35 @@ reshape wide matri_4_* ///
 order CODOOII matri_4_???? matri_4_prim???? matri_4_secun????
 export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
 	sheet("Matricula") sheetreplace firstrow(variables)
+
+*Metodo a usar aprobados y deaprobados por UGEL 
+
+use "3. Data\Datasets_intermedios\aprobados2013_2018.dta", clear
+rename codooii CODOOII	
+merge 1:1 CODOOII year using "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta" /// 
+	, keepusing(matri_4*)
+
+preserve
+
+use "3. Data\Datasets_intermedios\matri_tasas_2020_MCO.dta" , clear
+keep if year == 2020
+keep CODOOII
+expand 2
+bys CODOOII : gen year = _n
+replace year = 2018 + year
+
+tempfile append2020
+save `append2020'
+
+restore
+
+append using `append2020'
+
+sort CODOOII year
+save "3. Data\Datasets_intermedios\aprobados_matri2020.dta", replace
+
+use "3. Data\Datasets_intermedios\aprobados_matri2020.dta", clear
+
+p2_metodo_ue_year aprob_7 2018 
+drop metodo_ue metodo epm_ue2016 ugel
+rename ue aprob_6_ue

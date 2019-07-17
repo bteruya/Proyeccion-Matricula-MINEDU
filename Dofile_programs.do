@@ -134,7 +134,7 @@ local error = 100*`min'/r(N)
 dis "El error porcentual medio del mejor modelo es `error'% para el 2018"
 
 end
-
+*-------------------------------------------------------------------------------
 program p2_metodo_ue_year
 gen yniv = `1'
 label var yniv "Nivel de `1'"

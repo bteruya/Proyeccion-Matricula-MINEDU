@@ -73,6 +73,8 @@ label data "Matrícula de EBR pública por UGEL de 4 y 3 grado"
 tempfile matri_peru
 save `matri_peru', replace
 tabstat matri*, stat(sum) by(year)
+save  "3. Data\Datasets_intermedios\matri_ce", replace
+
 
 ************ Matricula para el método BID
 *matricula 2017
@@ -621,6 +623,590 @@ label var matri_ue_`i' "Matricula edad `i' por UGEL forecast exponencial"
 }
 
 save "3. Data\Datasets_intermedios\matri_tasas_2020_MCO.dta", replace
+*------------------------Metodo Yasmin modificado-------------------------------
+
+*En esta sección necesito tener las tasas de aprobación y no aprobación por UGEL 
+*y año. Luego haría merge con "3. Data\Datasets_intermedios\matri_ugel_2020.dta",
+*Luego a la tasa de aprobación y desaprobación les pongo una proyección por MCO 
+*por UGEL
+*Finalmente aplico la fórmula matri g+1 t+1 = Aprob g t + desap g+1 t
+*La fórmula será aplicada en el dofile 3 proyección
+*La preparación de la data será hecha en este dofile
+
+
+forvalues year = 2013/2018 {
+import dbase "3. Data\2. IIEE Level\Censo Escolar/`year'\Resultados`year'.dbf", clear
+save "3. Data\2. IIEE Level\Stata\Resultados`year'.dta" , replace
+}
+
+*2013: cuadro 101 tiene recuperacion, 201 result. recuperacion
+*2014: idem 2013
+*2015: cuadro 101 tiene recup y postergacion, 201 result recup
+*2016: C101 postergacion y recuperacion con 1 area, 2 areas, 3 areas. C201 result recup
+*2017: C101 idem 2016. C201 aprob de la misma IE.
+*2018: idem 2018. 
+
+forvalues year = 2013/2014 {
+use "3. Data\2. IIEE Level\Stata\Resultados`year'.dta" , clear
+rename _all, lower 
+gen nivel = .
+replace nivel = 1 if inlist(niv_mod, "A1" , "A2" , "A3" )
+replace nivel = 2 if niv_mod == "B0"
+replace nivel = 3 if niv_mod == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
+
+gen publico = substr(ges_dep,1,1) == "A" // no hay missings
+keep if publico == 1
+
+tab cuadro nivel, missing
+
+preserve
+
+keep if cuadro == "101"
+tab tipdato
+codebook descrip
+destring tipdato, replace
+gen aprob1_dic = d01 + d02 if tipdato == 1
+label var aprob1_dic "Aprobados en dic `year' DE 1ro"
+
+gen aprob2_dic = d03 + d04 if tipdato == 1
+label var aprob2_dic "Aprobados en dic `year' DE 2do"
+
+gen aprob3_dic = d05 + d06 if tipdato == 1
+label var aprob3_dic "Aprobados en dic `year' DE 3ro"
+
+gen aprob4_dic = d07 + d08 if tipdato == 1
+label var aprob4_dic "Aprobados en dic `year' DE 4to"
+
+gen aprob5_dic = d09 + d10 if tipdato == 1
+label var aprob5_dic "Aprobados en dic `year' DE 5to"
+
+gen aprob6_dic = d11 + d12 if tipdato == 1
+label var aprob6_dic "Aprobados en dic `year' DE 6to"
+
+gen noaprob1_dic = d01 + d02 if inlist(tipdato, 2, 4, 5, 6 )
+label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
+
+gen noaprob2_dic = d03 + d04 if inlist(tipdato, 2, 4, 5, 6 )
+label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
+
+gen noaprob3_dic = d05 + d06 if inlist(tipdato, 2, 4, 5, 6 )
+label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
+
+gen noaprob4_dic = d07 + d08 if inlist(tipdato, 2, 4, 5, 6 )
+label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
+
+gen noaprob5_dic = d09 + d10 if inlist(tipdato, 2, 4, 5, 6 )
+label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
+
+gen noaprob6_dic = d11 + d12 if inlist(tipdato, 2, 4, 5, 6 )
+label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
+tempfile aprob`year'
+save `aprob`year'' , replace
+
+restore
+
+keep if cuadro == "201"
+tab tipdato
+codebook descrip
+destring tipdato, replace
+
+gen aprob1_feb = d01 + d02 if tipdato == 1
+label var aprob1_feb "Aprobados en feb `year' DE 1ro"
+
+gen aprob2_feb = d03 + d04 if tipdato == 1
+label var aprob2_feb "Aprobados en feb `year' DE 2do"
+
+gen aprob3_feb = d05 + d06 if tipdato == 1
+label var aprob3_feb "Aprobados en feb `year' DE 3ro"
+
+gen aprob4_feb = d07 + d08 if tipdato == 1
+label var aprob4_feb "Aprobados en feb `year' DE 4to"
+
+gen aprob5_feb = d09 + d10 if tipdato == 1
+label var aprob5_feb "Aprobados en feb `year' DE 5to"
+
+gen aprob6_feb = d11 + d12 if tipdato == 1
+label var aprob6_feb "Aprobados en feb `year' DE 6to"
+
+
+gen noaprob1_feb = d01 + d02 if tipdato == 2
+label var noaprob1_feb "NO Aprobados en feb `year' DE 1ro"
+
+gen noaprob2_feb = d03 + d04 if tipdato == 2
+label var noaprob2_feb "NO Aprobados en feb `year' DE 2do"
+
+gen noaprob3_feb = d05 + d06 if tipdato == 2
+label var noaprob3_feb "NO Aprobados en feb `year' DE 3ro"
+
+gen noaprob4_feb = d07 + d08 if tipdato == 2
+label var noaprob4_feb "NO Aprobados en feb `year' DE 4to"
+
+gen noaprob5_feb = d09 + d10 if tipdato == 2
+label var noaprob5_feb "NO Aprobados en feb `year' DE 5to"
+
+gen noaprob6_feb = d11 + d12 if tipdato == 2
+label var noaprob6_feb "NO Aprobados en feb `year' DE 6to"
+
+merge 1:1 cod_mod anexo tipdato using `aprob`year'', nogen
+
+forvalues grado = 1/6 {
+	egen aprob`grado' = rowtotal(aprob`grado'_???)
+	 
+	egen noaprob`grado' = rowtotal(noaprob`grado'_???)
+}
+tabstat aprob? noaprob?, stat(sum) by(descrip)
+
+collapse (sum) aprob? noaprob? ,by(codooii nivel)
+
+renvars aprob? noaprob? ///
+	 , suffix("_")
+
+reshape wide aprob?_ noaprob?_, i(codooii) j(nivel)
+
+rename (aprob1_2 aprob2_2 aprob3_2 aprob4_2 aprob5_2 aprob6_2) ///
+	(aprob_6 aprob_7 aprob_8 aprob_9 aprob_10 aprob_11)
+
+drop aprob6_3	// sexto grado de secundaria, no existe
+
+rename (aprob1_3 aprob2_3 aprob3_3 aprob4_3 aprob5_3 ) ///
+	(aprob_12 apro_13 aprob_14 aprob_15 aprob_16 )
+
+rename (noaprob1_2 noaprob2_2 noaprob3_2 noaprob4_2 noaprob5_2 noaprob6_2) ///
+	(noaprob_6 noaprob_7 noaprob_8 noaprob_9 noaprob_10 noaprob_11)
+
+drop noaprob6_3	// sexto grado de secundaria, no existe
+
+rename (noaprob1_3 noaprob2_3 noaprob3_3 noaprob4_3 noaprob5_3 ) ///
+	(noaprob_12 noaprob_13 noaprob_14 noaprob_15 noaprob_16 )
+
+save "3. Data\Datasets_intermedios\aprobados`year'.dta", replace
+
+}
+
+local year 2015
+use "3. Data\2. IIEE Level\Stata\Resultados`year'.dta" , clear
+rename _all, lower 
+gen nivel = .
+replace nivel = 1 if inlist(niv_mod, "A1" , "A2" , "A3" )
+replace nivel = 2 if niv_mod == "B0"
+replace nivel = 3 if niv_mod == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
+
+gen publico = substr(ges_dep,1,1) == "A" // no hay missings
+keep if publico == 1
+
+tab cuadro nivel, missing
+
+preserve
+
+keep if cuadro == "101"
+tab tipdato
+destring tipdato, replace
+
+gen aprob1_dic = d01 + d02 if tipdato == 1
+label var aprob1_dic "Aprobados en dic `year' DE 1ro"
+
+gen aprob2_dic = d03 + d04 if tipdato == 1
+label var aprob2_dic "Aprobados en dic `year' DE 2do"
+
+gen aprob3_dic = d05 + d06 if tipdato == 1
+label var aprob3_dic "Aprobados en dic `year' DE 3ro"
+
+gen aprob4_dic = d07 + d08 if tipdato == 1
+label var aprob4_dic "Aprobados en dic `year' DE 4to"
+
+gen aprob5_dic = d09 + d10 if tipdato == 1
+label var aprob5_dic "Aprobados en dic `year' DE 5to"
+
+gen aprob6_dic = d11 + d12 if tipdato == 1
+label var aprob6_dic "Aprobados en dic `year' DE 6to"
+
+gen noaprob1_dic = d01 + d02 if inlist(tipdato, 3, 4, 5, 6, 7 )
+label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
+
+gen noaprob2_dic = d03 + d04 if inlist(tipdato, 3, 4, 5, 6, 7 )
+label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
+
+gen noaprob3_dic = d05 + d06 if inlist(tipdato, 3, 4, 5, 6, 7 )
+label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
+
+gen noaprob4_dic = d07 + d08 if inlist(tipdato, 3, 4, 5, 6, 7 )
+label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
+
+gen noaprob5_dic = d09 + d10 if inlist(tipdato, 3, 4, 5, 6, 7 )
+label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
+
+gen noaprob6_dic = d11 + d12 if inlist(tipdato, 3, 4, 5, 6, 7 )
+label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
+tempfile aprob`year'
+save `aprob`year'' , replace
+
+restore
+keep if cuadro == "201"
+tab tipdato
+destring tipdato, replace
+
+gen aprob1_feb = d01 + d02 if tipdato == 1
+label var aprob1_feb "Aprobados en feb `year' DE 1ro"
+
+gen aprob2_feb = d03 + d04 if tipdato == 1
+label var aprob2_feb "Aprobados en feb `year' DE 2do"
+
+gen aprob3_feb = d05 + d06 if tipdato == 1
+label var aprob3_feb "Aprobados en feb `year' DE 3ro"
+
+gen aprob4_feb = d07 + d08 if tipdato == 1
+label var aprob4_feb "Aprobados en feb `year' DE 4to"
+
+gen aprob5_feb = d09 + d10 if tipdato == 1
+label var aprob5_feb "Aprobados en feb `year' DE 5to"
+
+gen aprob6_feb = d11 + d12 if tipdato == 1
+label var aprob6_feb "Aprobados en feb `year' DE 6to"
+
+
+gen noaprob1_feb = d01 + d02 if tipdato == 2
+label var noaprob1_feb "NO Aprobados en feb `year' DE 1ro"
+
+gen noaprob2_feb = d03 + d04 if tipdato == 2
+label var noaprob2_feb "NO Aprobados en feb `year' DE 2do"
+
+gen noaprob3_feb = d05 + d06 if tipdato == 2
+label var noaprob3_feb "NO Aprobados en feb `year' DE 3ro"
+
+gen noaprob4_feb = d07 + d08 if tipdato == 2
+label var noaprob4_feb "NO Aprobados en feb `year' DE 4to"
+
+gen noaprob5_feb = d09 + d10 if tipdato == 2
+label var noaprob5_feb "NO Aprobados en feb `year' DE 5to"
+
+gen noaprob6_feb = d11 + d12 if tipdato == 2
+label var noaprob6_feb "NO Aprobados en feb `year' DE 6to"
+
+merge 1:1 cod_mod anexo tipdato using `aprob`year'', nogen
+
+forvalues grado = 1/6 {
+	egen aprob`grado' = rowtotal(aprob`grado'_???)
+	 
+	egen noaprob`grado' = rowtotal(noaprob`grado'_???)
+}
+
+collapse (sum) aprob? noaprob? ,by(codooii nivel)
+
+renvars aprob? noaprob? ///
+	 , suffix("_")
+
+reshape wide aprob?_ noaprob?_, i(codooii) j(nivel)
+
+rename (aprob1_2 aprob2_2 aprob3_2 aprob4_2 aprob5_2 aprob6_2) ///
+	(aprob_6 aprob_7 aprob_8 aprob_9 aprob_10 aprob_11)
+
+drop aprob6_3	// sexto grado de secundaria, no existe
+
+rename (aprob1_3 aprob2_3 aprob3_3 aprob4_3 aprob5_3 ) ///
+	(aprob_12 apro_13 aprob_14 aprob_15 aprob_16 )
+
+rename (noaprob1_2 noaprob2_2 noaprob3_2 noaprob4_2 noaprob5_2 noaprob6_2) ///
+	(noaprob_6 noaprob_7 noaprob_8 noaprob_9 noaprob_10 noaprob_11)
+
+drop noaprob6_3	// sexto grado de secundaria, no existe
+
+rename (noaprob1_3 noaprob2_3 noaprob3_3 noaprob4_3 noaprob5_3 ) ///
+	(noaprob_12 noaprob_13 noaprob_14 noaprob_15 noaprob_16 )
+
+save "3. Data\Datasets_intermedios\aprobados`year'.dta", replace
+*year 2016
+local year 2016
+use "3. Data\2. IIEE Level\Stata\Resultados`year'.dta" , clear
+rename _all, lower 
+gen nivel = .
+replace nivel = 1 if inlist(niv_mod, "A1" , "A2" , "A3" )
+replace nivel = 2 if niv_mod == "B0"
+replace nivel = 3 if niv_mod == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
+
+gen publico = substr(ges_dep,1,1) == "A" // no hay missings
+keep if publico == 1
+
+tab cuadro nivel, missing
+
+preserve
+
+keep if cuadro == "C101"
+tab tipdato
+destring tipdato, replace
+
+gen aprob1_dic = d01 + d02 if tipdato == 1
+label var aprob1_dic "Aprobados en dic `year' DE 1ro"
+
+gen aprob2_dic = d03 + d04 if tipdato == 1
+label var aprob2_dic "Aprobados en dic `year' DE 2do"
+
+gen aprob3_dic = d05 + d06 if tipdato == 1
+label var aprob3_dic "Aprobados en dic `year' DE 3ro"
+
+gen aprob4_dic = d07 + d08 if tipdato == 1
+label var aprob4_dic "Aprobados en dic `year' DE 4to"
+
+gen aprob5_dic = d09 + d10 if tipdato == 1
+label var aprob5_dic "Aprobados en dic `year' DE 5to"
+
+gen aprob6_dic = d11 + d12 if tipdato == 1
+label var aprob6_dic "Aprobados en dic `year' DE 6to"
+
+gen noaprob1_dic = d01 + d02 if inrange(tipdato, 5,9 )
+label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
+
+gen noaprob2_dic = d03 + d04 if inrange(tipdato, 5,9 )
+label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
+
+gen noaprob3_dic = d05 + d06 if inrange(tipdato, 5,9 )
+label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
+
+gen noaprob4_dic = d07 + d08 if inrange(tipdato, 5,9 )
+label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
+
+gen noaprob5_dic = d09 + d10 if inrange(tipdato, 5,9 )
+label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
+
+gen noaprob6_dic = d11 + d12 if inrange(tipdato, 5,9 )
+label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
+tempfile aprob`year'
+save `aprob`year'' , replace
+
+restore
+keep if cuadro == "C201"
+tab tipdato
+destring tipdato, replace
+
+gen aprob1_feb = d01 + d02 if tipdato == 1
+label var aprob1_feb "Aprobados en feb `year' DE 1ro"
+
+gen aprob2_feb = d03 + d04 if tipdato == 1
+label var aprob2_feb "Aprobados en feb `year' DE 2do"
+
+gen aprob3_feb = d05 + d06 if tipdato == 1
+label var aprob3_feb "Aprobados en feb `year' DE 3ro"
+
+gen aprob4_feb = d07 + d08 if tipdato == 1
+label var aprob4_feb "Aprobados en feb `year' DE 4to"
+
+gen aprob5_feb = d09 + d10 if tipdato == 1
+label var aprob5_feb "Aprobados en feb `year' DE 5to"
+
+gen aprob6_feb = d11 + d12 if tipdato == 1
+label var aprob6_feb "Aprobados en feb `year' DE 6to"
+
+
+gen noaprob1_feb = d01 + d02 if tipdato == 2
+label var noaprob1_feb "NO Aprobados en feb `year' DE 1ro"
+
+gen noaprob2_feb = d03 + d04 if tipdato == 2
+label var noaprob2_feb "NO Aprobados en feb `year' DE 2do"
+
+gen noaprob3_feb = d05 + d06 if tipdato == 2
+label var noaprob3_feb "NO Aprobados en feb `year' DE 3ro"
+
+gen noaprob4_feb = d07 + d08 if tipdato == 2
+label var noaprob4_feb "NO Aprobados en feb `year' DE 4to"
+
+gen noaprob5_feb = d09 + d10 if tipdato == 2
+label var noaprob5_feb "NO Aprobados en feb `year' DE 5to"
+
+gen noaprob6_feb = d11 + d12 if tipdato == 2
+label var noaprob6_feb "NO Aprobados en feb `year' DE 6to"
+
+merge 1:1 cod_mod anexo tipdato using `aprob`year'', nogen
+
+forvalues grado = 1/6 {
+	egen aprob`grado' = rowtotal(aprob`grado'_???)
+	 
+	egen noaprob`grado' = rowtotal(noaprob`grado'_???)
+}
+
+collapse (sum) aprob? noaprob? ,by(codooii nivel)
+
+renvars aprob? noaprob? ///
+	 , suffix("_")
+
+reshape wide aprob?_ noaprob?_, i(codooii) j(nivel)
+
+rename (aprob1_2 aprob2_2 aprob3_2 aprob4_2 aprob5_2 aprob6_2) ///
+	(aprob_6 aprob_7 aprob_8 aprob_9 aprob_10 aprob_11)
+
+drop aprob6_3	// sexto grado de secundaria, no existe
+
+rename (aprob1_3 aprob2_3 aprob3_3 aprob4_3 aprob5_3 ) ///
+	(aprob_12 apro_13 aprob_14 aprob_15 aprob_16 )
+
+rename (noaprob1_2 noaprob2_2 noaprob3_2 noaprob4_2 noaprob5_2 noaprob6_2) ///
+	(noaprob_6 noaprob_7 noaprob_8 noaprob_9 noaprob_10 noaprob_11)
+
+drop noaprob6_3	// sexto grado de secundaria, no existe
+
+rename (noaprob1_3 noaprob2_3 noaprob3_3 noaprob4_3 noaprob5_3 ) ///
+	(noaprob_12 noaprob_13 noaprob_14 noaprob_15 noaprob_16 )
+
+save "3. Data\Datasets_intermedios\aprobados`year'.dta", replace
+
+*year 2017 y 2018
+forvalues year = 2017/2018 {
+use "3. Data\2. IIEE Level\Stata\Resultados`year'.dta" , clear
+rename _all, lower 
+gen nivel = .
+replace nivel = 1 if inlist(niv_mod, "A1" , "A2" , "A3" )
+replace nivel = 2 if niv_mod == "B0"
+replace nivel = 3 if niv_mod == "F0"
+
+label  def nivel 1 "Inicial sin PRONOEI" 2 "Primaria" 3 "Secundaria"
+label val nivel nivel
+keep if inlist(nivel,2,3) //solo primaria y secundaria como ejemplos
+
+gen publico = substr(ges_dep,1,1) == "A" // no hay missings
+keep if publico == 1
+
+tab cuadro nivel, missing
+
+preserve
+
+keep if cuadro == "C101"
+tab tipdato
+destring tipdato, replace
+
+gen aprob1_dic = d01 + d02 if tipdato == 1
+label var aprob1_dic "Aprobados en dic `year' DE 1ro"
+
+gen aprob2_dic = d03 + d04 if tipdato == 1
+label var aprob2_dic "Aprobados en dic `year' DE 2do"
+
+gen aprob3_dic = d05 + d06 if tipdato == 1
+label var aprob3_dic "Aprobados en dic `year' DE 3ro"
+
+gen aprob4_dic = d07 + d08 if tipdato == 1
+label var aprob4_dic "Aprobados en dic `year' DE 4to"
+
+gen aprob5_dic = d09 + d10 if tipdato == 1
+label var aprob5_dic "Aprobados en dic `year' DE 5to"
+
+gen aprob6_dic = d11 + d12 if tipdato == 1
+label var aprob6_dic "Aprobados en dic `year' DE 6to"
+
+gen noaprob1_dic = d01 + d02 if inrange(tipdato, 5,9 )
+label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
+
+gen noaprob2_dic = d03 + d04 if inrange(tipdato, 5,9 )
+label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
+
+gen noaprob3_dic = d05 + d06 if inrange(tipdato, 5,9 )
+label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
+
+gen noaprob4_dic = d07 + d08 if inrange(tipdato, 5,9 )
+label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
+
+gen noaprob5_dic = d09 + d10 if inrange(tipdato, 5,9 )
+label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
+
+gen noaprob6_dic = d11 + d12 if inrange(tipdato, 5,9 )
+label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
+tempfile aprob`year'
+save `aprob`year'' , replace
+
+restore
+keep if cuadro == "C201"
+tab tipdato
+destring tipdato, replace
+
+gen aprob1_feb = d01 + d02 if inrange(tipdato, 1, 2)
+label var aprob1_feb "Aprobados en feb `year' DE 1ro"
+
+gen aprob2_feb = d03 + d04 if inrange(tipdato, 1, 2)
+label var aprob2_feb "Aprobados en feb `year' DE 2do"
+
+gen aprob3_feb = d05 + d06 if inrange(tipdato, 1, 2)
+label var aprob3_feb "Aprobados en feb `year' DE 3ro"
+
+gen aprob4_feb = d07 + d08 if inrange(tipdato, 1, 2)
+label var aprob4_feb "Aprobados en feb `year' DE 4to"
+
+gen aprob5_feb = d09 + d10 if inrange(tipdato, 1, 2)
+label var aprob5_feb "Aprobados en feb `year' DE 5to"
+
+gen aprob6_feb = d11 + d12 if inrange(tipdato, 1, 2)
+label var aprob6_feb "Aprobados en feb `year' DE 6to"
+
+
+gen noaprob1_feb = d01 + d02 if inrange(tipdato, 3, 5)
+label var noaprob1_feb "NO Aprobados en feb `year' DE 1ro"
+
+gen noaprob2_feb = d03 + d04 if inrange(tipdato, 3, 5)
+label var noaprob2_feb "NO Aprobados en feb `year' DE 2do"
+
+gen noaprob3_feb = d05 + d06 if inrange(tipdato, 3, 5)
+label var noaprob3_feb "NO Aprobados en feb `year' DE 3ro"
+
+gen noaprob4_feb = d07 + d08 if inrange(tipdato, 3, 5)
+label var noaprob4_feb "NO Aprobados en feb `year' DE 4to"
+
+gen noaprob5_feb = d09 + d10 if inrange(tipdato, 3, 5)
+label var noaprob5_feb "NO Aprobados en feb `year' DE 5to"
+
+gen noaprob6_feb = d11 + d12 if inrange(tipdato, 3, 5)
+label var noaprob6_feb "NO Aprobados en feb `year' DE 6to"
+
+merge 1:1 cod_mod anexo tipdato using `aprob`year'', nogen
+
+forvalues grado = 1/6 {
+	egen aprob`grado' = rowtotal(aprob`grado'_???)
+	 
+	egen noaprob`grado' = rowtotal(noaprob`grado'_???)
+}
+
+collapse (sum) aprob? noaprob? ,by(codooii nivel)
+
+renvars aprob? noaprob? ///
+	 , suffix("_")
+
+reshape wide aprob?_ noaprob?_, i(codooii) j(nivel)
+
+rename (aprob1_2 aprob2_2 aprob3_2 aprob4_2 aprob5_2 aprob6_2) ///
+	(aprob_6 aprob_7 aprob_8 aprob_9 aprob_10 aprob_11)
+
+drop aprob6_3	// sexto grado de secundaria, no existe
+
+rename (aprob1_3 aprob2_3 aprob3_3 aprob4_3 aprob5_3 ) ///
+	(aprob_12 apro_13 aprob_14 aprob_15 aprob_16 )
+
+rename (noaprob1_2 noaprob2_2 noaprob3_2 noaprob4_2 noaprob5_2 noaprob6_2) ///
+	(noaprob_6 noaprob_7 noaprob_8 noaprob_9 noaprob_10 noaprob_11)
+
+drop noaprob6_3	// sexto grado de secundaria, no existe
+
+rename (noaprob1_3 noaprob2_3 noaprob3_3 noaprob4_3 noaprob5_3 ) ///
+	(noaprob_12 noaprob_13 noaprob_14 noaprob_15 noaprob_16 )
+
+save "3. Data\Datasets_intermedios\aprobados`year'.dta", replace
+}
+
+use "3. Data\Datasets_intermedios\aprobados2013.dta", clear
+gen year = 2013
+forvalues year = 2014/2018 {
+append using "3. Data\Datasets_intermedios\aprobados`year'.dta"
+replace year = `year' if year == .
+}
+label data "Aprobados y desaprobados de EBR pública por UGEL"
+
+save  "3. Data\Datasets_intermedios\aprobados2013_2018.dta", replace
+
 *-------------------------------secciones---------------------------------------
 
 forvalues year = 2013/2018 {
