@@ -1,0 +1,3 @@
+# Este archivo explicara lo que quiero hacer en la carpeta graficos
+quiero tener un solo script de R que realice los mapas sobre UGEL con distintos errores de prediccion
+Tambien quiero un dofile que haga graficos sobre tipo UGEL y error de prediccion

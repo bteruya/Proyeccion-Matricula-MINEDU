@@ -209,13 +209,80 @@ gen epm_bid_mco = abs(matri_4_bid - matri_4_siagie)/matri_4_siagie if year == 20
 drop matri_*siagie
 
 save "3. Data\Datasets_intermedios\matri_proy_2020_MCO.dta", replace
+
+*Metodo a usar aprobados y deaprobados por UGEL 
+
+use "3. Data\Datasets_intermedios\aprobados2013_2018.dta", clear
+rename codooii CODOOII	
+merge 1:1 CODOOII year using "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta" /// 
+	, keepusing(matri_4*) nogen
+
+preserve
+
+use "3. Data\Datasets_intermedios\aprobados2013_2018.dta" , clear
+keep if year == 2018
+rename codooii CODOOII	
+keep CODOOII
+expand 2
+bys CODOOII : gen year = _n
+replace year = 2018 + year
+
+tempfile append2020
+save `append2020'
+
+restore
+
+append using `append2020'
+
+sort CODOOII year
+save "3. Data\Datasets_intermedios\aprobados_matri2020.dta", replace
+
+
+use "3. Data\Datasets_intermedios\aprobados_matri2020.dta", clear
+
+foreach var of varlist  aprob_? aprob_?? noaprob_? noaprob_?? {
+p2_metodo_ue_year `var' 2018 
+drop metodo_ue metodo epm_ue2018 ugel
+rename ue `var'_ue
+}
+
+codebook *_ue
+destring CODOOII, gen(codooii)
+xtset codooii year
+
+gen matri_4_prim_apr = L1.aprob_8_ue + noaprob_9_ue // aprobados del grado anterior el anio anterior
+*+ aprobados del presente grado el presente anio
+
+gen matri_4_sec_apr = L1.aprob_14_ue + noaprob_15_ue
+
+gen matri_4_apr = matri_4_prim_apr + matri_4_sec_apr
+
+tab year if matri_4_apr == . 
+*el anio inicial de matri_4 sera siempre missing
+*el 216 ugeles el anio inicial es 2013
+*5 ugeles tienen anio inicial en otro momento
+
+gen epm_apr_2018 = abs(matri_4_apr - matri_4)/(matri_4) if year == 2018
+gen epm_apr_prim2018 = abs(matri_4_prim_apr - matri_4_prim)/(matri_4_prim) if year == 2018
+gen epm_apr_sec2018 = abs(matri_4_sec_apr - matri_4_secun)/(matri_4_secun) if year == 2018
+
+keep codooii year matri_4_apr matri_4_*_apr epm*
+
+save "3. Data\Datasets_intermedios\aprobados_proyeccion.dta", replace
+
 *-------------------------------------------------------------------------------
+
+
 global variables4 matri_4 matri_4_prim matri_4_secun
 global variables3 matri_3 matri_3_prim matri_3_secun
 global errorbid epm_bid epm_bid_prim epm_bid_sec
 global matribid matri_4_bid matri_4_prim_bid matri_4_sec_bid
 global errorbidmco epm_bid_mco epm_bid_prim_mco epm_bid_sec_mco 
 global matribidmco matri_4_bid_mco matri_4_prim_bid_mco matri_4_sec_bid_mco 
+global errorapr epm_apr_2018 epm_apr_prim2018 epm_apr_sec2018
+global matapr matri_4_apr matri_4_prim_apr matri_4_sec_apr
+
+
 
 local n : word count $variables4
 
@@ -228,7 +295,8 @@ use "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta",  clea
 	local matbid : word `i' of $matribid
 	local e_bid_mco : word `i' of $errorbidmco
 	local m_bid_mco : word `i' of $matribidmco
-	
+	local errorapr : word `i' of $errorapr
+	local matapr : word `i' of $matapr
 	
 *programa que proyecta según ma y exp
 p1_exp_ma `var4'
@@ -246,8 +314,11 @@ replace mat_CSR = L1.CSR * L1.mat_CSR if year >= 2018
 gen epm_csr2018 = abs(mat_CSR - `var4')/`var4' if year == 2018
 
 merge 1:1 codooii year using "3. Data\Datasets_intermedios\matri_proy_2020.dta", nogen
-merge 1:1 codooii year using "3. Data\Datasets_intermedios\matri_proy_2020_MCO.dta"
-global epm epm_ma2018 epm_exp2018 epm_ue2018 epm_csr2018 `varbid' `e_bid_mco'
+merge 1:1 codooii year using "3. Data\Datasets_intermedios\matri_proy_2020_MCO.dta", nogen
+merge 1:1 codooii year using "3. Data\Datasets_intermedios\aprobados_proyeccion.dta"
+
+global epm epm_ma2018 epm_exp2018 epm_ue2018 epm_csr2018 ///
+	`varbid' `e_bid_mco' `errorapr'
 
 p3_eleccion $epm 
 
@@ -257,14 +328,16 @@ replace epm_ue2018 = epm_ue2018/221
 replace epm_csr2018 = epm_csr2018/221
 replace `varbid' = `varbid'/222
 replace `e_bid_mco' = `e_bid_mco' / 222
+replace `errorapr' = `errorapr' / 221
 *exportamos la bd
 
-export excel CODOOII year `var4' `m_bid_mco' metodo metodo_ue ue exp1 ma  mat_CSR `matbid' /// 
-using "4. Codigos\Output\Proyeccion_porUGEL.xls", ///
+export excel CODOOII year `var4' `m_bid_mco' metodo metodo_ue ue exp1 ma ///
+	mat_CSR `matbid' `matapr' /// 
+	using "4. Codigos\Output\Proyeccion_porUGEL.xls", ///
 	sheet("`var4'") sheetreplace firstrow(varlabels)
 
-collapse (sum) ue `var4'  exp1 ma mat_CSR `matbid' `m_bid_mco' ///
-	epm_ma2018  epm_exp2018 epm_ue2018 epm_csr2018 `varbid' `e_bid_mco' , by(year)
+collapse (sum) ue `var4'  exp1 ma mat_CSR `matbid' `m_bid_mco' `matapr' ///
+	epm_ma2018  epm_exp2018 epm_ue2018 epm_csr2018 `varbid' `e_bid_mco' `errorapr' , by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("`var4'") sheetreplace firstrow(variables)
@@ -286,34 +359,3 @@ order CODOOII matri_4_???? matri_4_prim???? matri_4_secun????
 export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
 	sheet("Matricula") sheetreplace firstrow(variables)
 
-*Metodo a usar aprobados y deaprobados por UGEL 
-
-use "3. Data\Datasets_intermedios\aprobados2013_2018.dta", clear
-rename codooii CODOOII	
-merge 1:1 CODOOII year using "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta" /// 
-	, keepusing(matri_4*)
-
-preserve
-
-use "3. Data\Datasets_intermedios\matri_tasas_2020_MCO.dta" , clear
-keep if year == 2020
-keep CODOOII
-expand 2
-bys CODOOII : gen year = _n
-replace year = 2018 + year
-
-tempfile append2020
-save `append2020'
-
-restore
-
-append using `append2020'
-
-sort CODOOII year
-save "3. Data\Datasets_intermedios\aprobados_matri2020.dta", replace
-
-use "3. Data\Datasets_intermedios\aprobados_matri2020.dta", clear
-
-p2_metodo_ue_year aprob_7 2018 
-drop metodo_ue metodo epm_ue2016 ugel
-rename ue aprob_6_ue
