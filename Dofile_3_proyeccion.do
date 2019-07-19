@@ -162,13 +162,13 @@ save "3. Data\Datasets_intermedios\matri_proy_2020.dta", replace
 use "3. Data\Datasets_intermedios\matri_tasas_2020_MCO.dta" , clear
 *en 2017 no hay inicial, debido a la bd que me han pasado
 * seguimos con lo que tenemos
-keep  matri_ue_? matri_ue_?? matri_? matri_?? codooii year t_tras_ue2 t_tras_ue3 t_desap_ue2 t_desap_ue3 r_drop2_ue r_drop3_ue
+keep  matri_ue_? matri_ue_?? matri_? matri_?? codooii year t_tras_ue2 t_tras_ue3 t_desap_ue2 t_desap_ue3 r_drop3_ue
 
 renvars matri_? matri_?? matri_ue_? matri_ue_?? ///
 	 , suffix("_")
 
 reshape wide matri_?_ matri_??_ matri_ue_?_ matri_ue_??_ ///
-	t_tras_ue2 t_tras_ue3 t_desap_ue2 t_desap_ue3 r_drop2_ue r_drop3_ue , i(codooii ) j(year)
+	t_tras_ue2 t_tras_ue3 t_desap_ue2 t_desap_ue3 r_drop3_ue , i(codooii ) j(year)
 
 
 forval a = 2017/2019 {
