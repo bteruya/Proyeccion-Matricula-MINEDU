@@ -16,40 +16,41 @@ p1_exp_ma doc_total
 *programa que proyecta según MCO por UGEL
 p2_metodo_ue doc_total
  
+*14 métodos (7 métodos dos periodos) de la UE anterior
+p4_metodo_siete doc_total
+
+global epm7 epm_ma?_2018 epm_mp?_2018 epm_mg?_2018 epm_cg?_2018 epm_tc?_2018 ///
+	epm_mco?_2018 epm_mcoln?_2018 
+p3_eleccion $epm7
+rename metodo metodo_siete
+graph bar (sum) epm_ma?_2018 epm_mp?_2018 epm_mg?_2018 epm_cg?_2018 epm_tc?_2018 ///
+	epm_mco?_2018 epm_mcoln?_2018 if year == 2018
+graph export "4. Codigos\Output\Plots\bar_doc_total.pdf", as(pdf) replace
+
+split metodo_siete, parse("_")	
+global aux = metodo_siete2[1]
+gen met7_ue = $aux	
+global aux = metodo_siete[1]
+gen epm_met7_2018 = $aux
+codebook met7_ue mco3 epm_met7_2018 epm_mco3_2018 
 *programa que elige entre metodos
-global epm epm_ma2018 epm_exp2018 epm_ue2018 
+global epm epm_ma2018 epm_exp2018 epm_ue2018 epm_met7_2018
 
 p3_eleccion $epm 
  
 tabstat ue, stat(sum) by(year)
 graph bar (sum) ue , over(year)
 
-replace epm_ma2018 = epm_ma2018/221 //hay 221 UGEL en 2018 
-replace epm_exp2018 = epm_exp2018/221
-replace epm_ue2018 = epm_ue2018/221
+
 
 export excel CODOOII year doc_total metodo metodo_ue ue exp1 ma   using ///
 	"4. Codigos\Output\Proyeccion_porUGEL.xls", ///
 	sheet("doc_total") sheetreplace firstrow(varlabels)
 	
-	
 preserve
 
-keep CODOOII year doc_total
-drop if year == 2013
-reshape wide doc_total , ///
-	i(CODOOII) j(year)
-export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
-	sheet("doc_total") sheetreplace firstrow(variables)
-
-*En este excel está la serie de docentes totales que se pone en el aplicativo
-*excel de la actual metodologia UE
-
-restore 
-preserve
-
-collapse (sum) ue doc_total exp1 ma ///
-	$epm , by(year)
+collapse (sum) ue doc_total exp1 ma met7_ue ///
+	(mean) $epm $epm7 , by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("Docentes") sheetreplace firstrow(variables)
@@ -74,32 +75,43 @@ p1_exp_ma `var'
 *programa que proyecta según MCO por UGEL
 p2_metodo_ue `var'
 
-global epm epm_ma2018 epm_exp2018 epm_ue2018 
+*14 métodos (7 métodos dos periodos) de la UE anterior
+p4_metodo_siete `var'
+
+*escoger de los 14 metodos uno
+global epm7 epm_ma?_2018 epm_mp?_2018 epm_mg?_2018 epm_cg?_2018 epm_tc?_2018 ///
+	epm_mco?_2018 epm_mcoln?_2018
+p3_eleccion $epm7 
+rename metodo metodo_siete
+
+graph bar (mean) $epm7 if year == 2018
+graph export "4. Codigos\Output\Plots\bar_`var'.pdf", as(pdf) replace
+
+split metodo_siete, parse("_")	
+global aux = metodo_siete2[1]
+gen met7_ue = $aux	
+global aux = metodo_siete[1]
+gen epm_met7_2018 = $aux
+
+*programa que elige entre metodos
+global epm epm_ma2018 epm_exp2018 epm_ue2018 epm_met7_2018 
+
 
 p3_eleccion $epm 
 
-replace epm_ma2018 = epm_ma2018/221
-replace epm_exp2018 = epm_exp2018/221
-replace epm_ue2018 = epm_ue2018/221
 
-export excel CODOOII year `var' metodo metodo_ue ue exp1 ma   using ///
+export excel CODOOII year `var' metodo metodo_ue ue exp1 ma  met7_ue using ///
 	"4. Codigos\Output\Proyeccion_porUGEL.xls", ///
 	sheet("`var'") sheetreplace firstrow(varlabels)
 
 preserve 
-collapse (sum) ue `var' exp1 ma ///
-	epm_ma2018 epm_exp2018 epm_ue2018, by(year)
+collapse (sum) ue `var' exp1 ma met7_ue ///
+	(mean) epm_ma2018 epm_exp2018 epm_ue2018 epm_met7_2018 $epm7 , by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("`var'") sheetreplace firstrow(variables)
 	
 restore	
-keep CODOOII year `var'
-keep if inrange(year, 2014,2018)
-reshape wide `var' , ///
-	i(CODOOII) j(year)
-export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
-	sheet("`var'") sheetreplace firstrow(variables)
 	
 }
 
@@ -304,6 +316,26 @@ p1_exp_ma `var4'
 *programa que proyecta según MCO por UGEL
 p2_metodo_ue `var4'
 *--------
+
+*14 métodos (7 métodos dos periodos) de la UE anterior
+p4_metodo_siete `var4'
+
+*escoger de los 14 metodos uno
+global epm7 epm_ma?_2018 epm_mp?_2018 epm_mg?_2018 epm_cg?_2018 epm_tc?_2018 ///
+	epm_mco?_2018 epm_mcoln?_2018
+p3_eleccion $epm7 
+rename metodo metodo_siete
+
+graph bar (mean) $epm7 if year == 2018
+graph export "4. Codigos\Output\Plots\bar_`var4'.pdf", as(pdf) replace
+
+split metodo_siete, parse("_")	
+global aux = metodo_siete2[1]
+gen met7_ue = $aux	
+global aux = metodo_siete[1]
+gen epm_met7_2018 = $aux
+
+
 *Cohort Survival Ratio
 gen CSR = ( `var4' + L1.`var4' ) /(L1.`var3' + L2.`var3' )
 gen mat_CSR = CSR * L1.`var3' if year < 2018
@@ -318,17 +350,10 @@ merge 1:1 codooii year using "3. Data\Datasets_intermedios\matri_proy_2020_MCO.d
 merge 1:1 codooii year using "3. Data\Datasets_intermedios\aprobados_proyeccion.dta"
 
 global epm epm_ma2018 epm_exp2018 epm_ue2018 epm_csr2018 ///
-	`varbid' `e_bid_mco' `errorapr'
+	`varbid' `e_bid_mco' `errorapr' epm_met7_2018
 
 p3_eleccion $epm 
 
-replace epm_ma2018 = epm_ma2018/221
-replace epm_exp2018 = epm_exp2018/221
-replace epm_ue2018 = epm_ue2018/221
-replace epm_csr2018 = epm_csr2018/221
-replace `varbid' = `varbid'/222
-replace `e_bid_mco' = `e_bid_mco' / 222
-replace `errorapr' = `errorapr' / 221
 *exportamos la bd
 
 export excel CODOOII year `var4' `m_bid_mco' metodo metodo_ue ue exp1 ma ///
@@ -336,26 +361,9 @@ export excel CODOOII year `var4' `m_bid_mco' metodo metodo_ue ue exp1 ma ///
 	using "4. Codigos\Output\Proyeccion_porUGEL.xls", ///
 	sheet("`var4'") sheetreplace firstrow(varlabels)
 
-collapse (sum) ue `var4'  exp1 ma mat_CSR `matbid' `m_bid_mco' `matapr' ///
-	epm_ma2018  epm_exp2018 epm_ue2018 epm_csr2018 `varbid' `e_bid_mco' `errorapr' , by(year)
+collapse (sum) ue `var4'  exp1 ma mat_CSR `matbid' `m_bid_mco' `matapr' met7_ue ///
+	(mean) $epm $epm7 , by(year)
 
 export excel using "4. Codigos\Output\Proyeccion.xls", ///
 	sheet("`var4'") sheetreplace firstrow(variables)
 }
-
-
-
-*Método UE del Excel, pasar data a Excel y luego copiarla al aplicativo con el que
-*se proyecta
-
-use "3. Data\Datasets_intermedios\matricula_secciones_peru_2013-2018.dta",  clear
-keep CODOOII year matri_4*
-rename matri_4 matri_4_
-drop if year == 2013
-reshape wide matri_4_* ///
-	, i(CODOOII) j(year)
-
-order CODOOII matri_4_???? matri_4_prim???? matri_4_secun????
-export excel using "4. Codigos\Output\Proyeccion_actual_UE.xls", ///
-	sheet("Matricula") sheetreplace firstrow(variables)
-

@@ -687,22 +687,22 @@ label var aprob5_dic "Aprobados en dic `year' DE 5to"
 gen aprob6_dic = d11 + d12 if tipdato == 1
 label var aprob6_dic "Aprobados en dic `year' DE 6to"
 
-gen noaprob1_dic = d01 + d02 if inlist(tipdato, 2, 4, 5, 6 )
+gen noaprob1_dic = d01 + d02 if inlist(tipdato, 2, 5, 6 )
 label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
 
-gen noaprob2_dic = d03 + d04 if inlist(tipdato, 2, 4, 5, 6 )
+gen noaprob2_dic = d03 + d04 if inlist(tipdato, 2,  5, 6 )
 label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
 
-gen noaprob3_dic = d05 + d06 if inlist(tipdato, 2, 4, 5, 6 )
+gen noaprob3_dic = d05 + d06 if inlist(tipdato, 2, 5, 6 )
 label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
 
-gen noaprob4_dic = d07 + d08 if inlist(tipdato, 2, 4, 5, 6 )
+gen noaprob4_dic = d07 + d08 if inlist(tipdato, 2,  5, 6 )
 label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
 
-gen noaprob5_dic = d09 + d10 if inlist(tipdato, 2, 4, 5, 6 )
+gen noaprob5_dic = d09 + d10 if inlist(tipdato, 2, 5, 6 )
 label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
 
-gen noaprob6_dic = d11 + d12 if inlist(tipdato, 2, 4, 5, 6 )
+gen noaprob6_dic = d11 + d12 if inlist(tipdato, 2, 5, 6 )
 label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
 tempfile aprob`year'
 save `aprob`year'' , replace
@@ -828,22 +828,22 @@ label var aprob5_dic "Aprobados en dic `year' DE 5to"
 gen aprob6_dic = d11 + d12 if tipdato == 1
 label var aprob6_dic "Aprobados en dic `year' DE 6to"
 
-gen noaprob1_dic = d01 + d02 if inlist(tipdato, 3, 4, 5, 6, 7 )
+gen noaprob1_dic = d01 + d02 if inlist(tipdato, 3, 5, 6, 7 )
 label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
 
-gen noaprob2_dic = d03 + d04 if inlist(tipdato, 3, 4, 5, 6, 7 )
+gen noaprob2_dic = d03 + d04 if inlist(tipdato, 3, 5, 6, 7 )
 label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
 
-gen noaprob3_dic = d05 + d06 if inlist(tipdato, 3, 4, 5, 6, 7 )
+gen noaprob3_dic = d05 + d06 if inlist(tipdato, 3, 5, 6, 7 )
 label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
 
-gen noaprob4_dic = d07 + d08 if inlist(tipdato, 3, 4, 5, 6, 7 )
+gen noaprob4_dic = d07 + d08 if inlist(tipdato, 3, 5, 6, 7 )
 label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
 
-gen noaprob5_dic = d09 + d10 if inlist(tipdato, 3, 4, 5, 6, 7 )
+gen noaprob5_dic = d09 + d10 if inlist(tipdato, 3, 5, 6, 7 )
 label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
 
-gen noaprob6_dic = d11 + d12 if inlist(tipdato, 3, 4, 5, 6, 7 )
+gen noaprob6_dic = d11 + d12 if inlist(tipdato, 3, 5, 6, 7 )
 label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
 tempfile aprob`year'
 save `aprob`year'' , replace
@@ -964,22 +964,22 @@ label var aprob5_dic "Aprobados en dic `year' DE 5to"
 gen aprob6_dic = d11 + d12 if tipdato == 1
 label var aprob6_dic "Aprobados en dic `year' DE 6to"
 
-gen noaprob1_dic = d01 + d02 if inrange(tipdato, 5,9 )
+gen noaprob1_dic = d01 + d02 if inlist(tipdato, 5,7,8,9 )
 label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
 
-gen noaprob2_dic = d03 + d04 if inrange(tipdato, 5,9 )
+gen noaprob2_dic = d03 + d04 if inlist(tipdato, 5,7,8,9 )
 label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
 
-gen noaprob3_dic = d05 + d06 if inrange(tipdato, 5,9 )
+gen noaprob3_dic = d05 + d06 if inlist(tipdato, 5,7,8,9 )
 label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
 
-gen noaprob4_dic = d07 + d08 if inrange(tipdato, 5,9 )
+gen noaprob4_dic = d07 + d08 if inlist(tipdato, 5,7,8,9 )
 label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
 
-gen noaprob5_dic = d09 + d10 if inrange(tipdato, 5,9 )
+gen noaprob5_dic = d09 + d10 if inlist(tipdato, 5,7,8,9 )
 label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
 
-gen noaprob6_dic = d11 + d12 if inrange(tipdato, 5,9 )
+gen noaprob6_dic = d11 + d12 if inlist(tipdato, 5,7,8,9 )
 label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
 tempfile aprob`year'
 save `aprob`year'' , replace
@@ -1101,22 +1101,22 @@ label var aprob5_dic "Aprobados en dic `year' DE 5to"
 gen aprob6_dic = d11 + d12 if tipdato == 1
 label var aprob6_dic "Aprobados en dic `year' DE 6to"
 
-gen noaprob1_dic = d01 + d02 if inrange(tipdato, 5,9 )
+gen noaprob1_dic = d01 + d02 if inlist(tipdato, 5,7,8,9 )
 label var noaprob1_dic "NO Aprobados en dic `year' DE 1ro"
 
-gen noaprob2_dic = d03 + d04 if inrange(tipdato, 5,9 )
+gen noaprob2_dic = d03 + d04 if inlist(tipdato, 5,7,8,9 )
 label var noaprob2_dic "NO Aprobados en dic `year' DE 2do"
 
-gen noaprob3_dic = d05 + d06 if inrange(tipdato, 5,9 )
+gen noaprob3_dic = d05 + d06 if inlist(tipdato, 5,7,8,9 )
 label var noaprob3_dic "NO Aprobados en dic `year' DE 3ro"
 
-gen noaprob4_dic = d07 + d08 if inrange(tipdato, 5,9 )
+gen noaprob4_dic = d07 + d08 if inlist(tipdato, 5,7,8,9 )
 label var noaprob4_dic "NO Aprobados en dic `year' DE 4to"
 
-gen noaprob5_dic = d09 + d10 if inrange(tipdato, 5,9 )
+gen noaprob5_dic = d09 + d10 if inlist(tipdato, 5,7,8,9 )
 label var noaprob5_dic "NO Aprobados en dic `year' DE 5to"
 
-gen noaprob6_dic = d11 + d12 if inrange(tipdato, 5,9 )
+gen noaprob6_dic = d11 + d12 if inlist(tipdato, 5,7,8,9 )
 label var noaprob6_dic "NO Aprobados en dic `year' DE 6to"
 tempfile aprob`year'
 save `aprob`year'' , replace
